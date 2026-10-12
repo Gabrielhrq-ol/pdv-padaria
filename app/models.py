@@ -137,6 +137,94 @@ class Product(Base):
     )
 
 
+class Sale(Base):
+    """
+    Venda. Fase 3: cria em status=open; itens adicionados/removidos.
+    Fase 4 adiciona payments e muda para completed na finalizacao atomica.
+
+    cash_session_id fica nullable; Fase 7 ativa o setting que exige caixa aberto.
+    """
+
+    __tablename__ = "sales"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    number: Mapped[int] = mapped_column(Integer, nullable=False, unique=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    cash_session_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    status: Mapped[str] = mapped_column(String(10), nullable=False, default="open")
+    subtotal_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    discount_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    total_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+    finalized_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    cancel_reason: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    cancelled_by: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("users.id"), nullable=True
+    )
+
+    items: Mapped[list["SaleItem"]] = relationship(
+        back_populates="sale",
+        cascade="all, delete-orphan",
+        order_by="SaleItem.id",
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('open', 'completed', 'cancelled')", name="ck_sales_status"
+        ),
+        CheckConstraint("subtotal_cents >= 0", name="ck_sales_subtotal_non_negative"),
+        CheckConstraint("discount_cents >= 0", name="ck_sales_discount_non_negative"),
+        CheckConstraint("total_cents >= 0", name="ck_sales_total_non_negative"),
+        Index("ix_sales_status", "status"),
+        Index("ix_sales_user_status", "user_id", "status"),
+        Index("ix_sales_created_at", "created_at"),
+    )
+
+
+class SaleItem(Base):
+    """
+    Item de venda. Copia nome, barcode, unidade e preco do produto no
+    momento da venda (CLAUDE.md regra 4).
+    """
+
+    __tablename__ = "sale_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sale_id: Mapped[int] = mapped_column(
+        ForeignKey("sales.id", ondelete="CASCADE"), nullable=False
+    )
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
+    # Copias (snapshot do momento)
+    product_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    barcode: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    internal_code: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+    unit: Mapped[str] = mapped_column(String(3), nullable=False)
+    unit_price_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    qty_milli: Mapped[int] = mapped_column(Integer, nullable=False)
+    line_total_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+
+    sale: Mapped["Sale"] = relationship(back_populates="items")
+
+    __table_args__ = (
+        CheckConstraint("qty_milli > 0", name="ck_sale_items_qty_positive"),
+        CheckConstraint(
+            "unit_price_cents >= 0", name="ck_sale_items_price_non_negative"
+        ),
+        CheckConstraint(
+            "line_total_cents >= 0", name="ck_sale_items_total_non_negative"
+        ),
+        CheckConstraint("unit IN ('UN', 'KG', 'L')", name="ck_sale_items_unit"),
+        Index("ix_sale_items_sale_id", "sale_id"),
+    )
+
+
 class AuditLog(Base):
     """
     Registro de acoes sensiveis (CLAUDE.md regra 11).

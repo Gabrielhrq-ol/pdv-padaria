@@ -21,10 +21,12 @@ from app.dependencies import require_admin, require_authenticated, require_csrf
 from app.models import AuditLog, Product, User
 from app.schemas import (
     ActiveUpdate,
+    ByCodeResult,
     ProductCreate,
     ProductOut,
     ProductUpdate,
 )
+from app.services.sales_service import SalesError, resolve_code
 
 router = APIRouter(prefix="/api/products", tags=["products"])
 
@@ -103,6 +105,26 @@ def search_products(
     if not include_inactive:
         stmt = stmt.where(Product.active.is_(True))
     return list(db.execute(stmt).scalars())
+
+
+@router.get("/by-code/{code}", response_model=ByCodeResult)
+def product_by_code(
+    code: str,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_authenticated),
+) -> ByCodeResult:
+    """
+    Resolve codigo (barcode, internal_code ou N*codigo) e devolve o produto
+    com o multiplicador de quantidade (default 1).
+    Usado pelo PDV para consulta rapida F9 e para resolver antes do add.
+    """
+    try:
+        resolved = resolve_code(db, code)
+    except SalesError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
+    return ByCodeResult.model_validate(
+        {"product": resolved.product, "qty_multiplier": resolved.qty_multiplier}
+    )
 
 
 @router.get("/{product_id}", response_model=ProductOut)

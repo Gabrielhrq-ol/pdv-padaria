@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}PDV - Padaria{% endblock %}
+{% block body_class %}pdv-body{% endblock %}
+
+{% block body %}
+<header class="pdv-header">
+  <div class="pdv-header-left">
+    <h1>PDV</h1>
+    <span class="user-info">
+      {{ user.name }} <small>({{ user.role }})</small>
+    </span>
+  </div>
+  <div class="pdv-header-right">
+    <span class="sale-number">Venda <strong id="sale-number">—</strong></span>
+    <span class="env-badge">{{ env }}</span>
+    <a href="/products" class="btn btn-sm">Produtos</a>
+    <button type="button" id="btn-sair" class="btn btn-sm">Sair</button>
+  </div>
+</header>
+
+<main class="pdv-main">
+  <section class="pdv-left">
+    <div class="pdv-code-row">
+      <label for="pdv-code">Codigo:</label>
+      <input
+        type="text"
+        id="pdv-code"
+        autocomplete="off"
+        inputmode="numeric"
+        autofocus
+        placeholder="bipe ou digite codigo (ex: 101, 7891111, 3*101)">
+      <span id="pdv-feedback" class="pdv-feedback" aria-live="polite"></span>
+    </div>
+
+    <div class="pdv-table-wrapper">
+      <table class="pdv-items">
+        <thead>
+          <tr>
+            <th class="col-idx">#</th>
+            <th>Produto</th>
+            <th class="col-qty">Qtd</th>
+            <th class="col-price">Preco</th>
+            <th class="col-total">Total</th>
+          </tr>
+        </thead>
+        <tbody id="pdv-tbody"></tbody>
+      </table>
+      <p id="pdv-empty" class="pdv-empty">Nenhum item. Bipe ou digite um codigo.</p>
+    </div>
+  </section>
+
+  <section class="pdv-right">
+    <div class="pdv-total-box">
+      <div class="pdv-total-label">TOTAL</div>
+      <div class="pdv-total-value" id="pdv-total">R$ 0,00</div>
+    </div>
+
+    <div class="pdv-favorites-wrapper">
+      <h2>Favoritos</h2>
+      <div id="pdv-favorites" class="pdv-favorites"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="pdv-shortcuts">
+  <span><kbd>F2</kbd> Buscar</span>
+  <span><kbd>F3</kbd> Alterar qtd</span>
+  <span><kbd>F4</kbd> Remover</span>
+  <span class="disabled" title="Disponivel na Fase 4"><kbd>F6</kbd> Pagar</span>
+  <span><kbd>F8</kbd> Cancelar venda</span>
+  <span><kbd>F9</kbd> Consultar preco</span>
+  <span class="disabled" title="Disponivel na Fase 5"><kbd>F10</kbd> Reimprimir</span>
+  <span><kbd>Esc</kbd> Fechar</span>
+</footer>
+
+<!-- Modal de busca por nome (F2) -->
+<div id="modal-busca" class="modal" hidden aria-modal="true" role="dialog">
+  <div class="modal-content modal-busca">
+    <header class="modal-header">
+      <h2>Buscar produto</h2>
+      <button type="button" class="btn-close" data-close="modal-busca">x</button>
+    </header>
+    <div class="modal-body">
+      <input type="search" id="busca-input" placeholder="nome, codigo..." autofocus>
+      <div id="busca-resultado" class="busca-resultado"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de alterar qty (F3) -->
+<div id="modal-qty" class="modal" hidden aria-modal="true" role="dialog">
+  <div class="modal-content modal-qty">
+    <header class="modal-header">
+      <h2>Alterar quantidade</h2>
+      <button type="button" class="btn-close" data-close="modal-qty">x</button>
+    </header>
+    <div class="modal-body">
+      <p id="qty-product-info"></p>
+      <input type="text" id="qty-input" autofocus inputmode="decimal" placeholder="0">
+      <p class="hint">UN: inteiro | KG/L: use virgula (ex: 0,350)</p>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close="modal-qty">Cancelar</button>
+        <button type="button" id="qty-ok" class="btn btn-primary">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal consultar preco (F9) -->
+<div id="modal-preco" class="modal" hidden aria-modal="true" role="dialog">
+  <div class="modal-content modal-preco">
+    <header class="modal-header">
+      <h2>Consultar preco</h2>
+      <button type="button" class="btn-close" data-close="modal-preco">x</button>
+    </header>
+    <div class="modal-body">
+      <input type="search" id="preco-input" placeholder="bipe o produto..." autofocus>
+      <div id="preco-resultado" class="preco-resultado"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal cancelar venda (F8) -->
+<div id="modal-cancel" class="modal" hidden aria-modal="true" role="dialog">
+  <div class="modal-content modal-cancel">
+    <header class="modal-header">
+      <h2>Cancelar venda</h2>
+      <button type="button" class="btn-close" data-close="modal-cancel">x</button>
+    </header>
+    <div class="modal-body">
+      <p>Esta acao cancela a venda inteira. E registrada no log de auditoria.</p>
+      <label for="cancel-motivo">Motivo:</label>
+      <input type="text" id="cancel-motivo" maxlength="200" autofocus>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close="modal-cancel">Voltar</button>
+        <button type="button" id="cancel-ok" class="btn btn-danger">Cancelar venda</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="pdv-toast" class="pdv-toast" hidden></div>
+
+<script src="/static/js/pdv.js"></script>
+{% endblock %}

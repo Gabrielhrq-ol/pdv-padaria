@@ -178,3 +178,61 @@ class ProductOut(StrictBase):
     active: bool
     created_at: datetime
     updated_at: datetime
+
+
+class ByCodeResult(StrictBase):
+    """Resposta de GET /api/products/by-code/{code}."""
+
+    product: ProductOut
+    qty_multiplier: int = Field(default=1, ge=1, le=1000)
+
+
+# ---------- Sales ----------
+
+SaleStatus = Literal["open", "completed", "cancelled"]
+
+
+class SaleItemAdd(StrictBase):
+    """
+    Adiciona um item. Fornece OU `product_id` OU `code`.
+    `code` aceita "N*codigo" para multiplicar.
+    `qty_milli` sobrescreve o multiplicador (ex: para peso digitado).
+    """
+
+    product_id: Optional[int] = Field(default=None, ge=1)
+    code: Optional[Annotated[str, StringConstraints(min_length=1, max_length=30)]] = None
+    qty_milli: Optional[int] = Field(default=None, ge=1, le=1_000_000_000)
+
+
+class SaleItemUpdate(StrictBase):
+    qty_milli: int = Field(..., ge=1, le=1_000_000_000)
+
+
+class SaleCancel(StrictBase):
+    reason: Annotated[str, StringConstraints(min_length=1, max_length=200)]
+
+
+class SaleItemOut(StrictBase):
+    id: int
+    product_id: int
+    product_name: str
+    barcode: Optional[str]
+    internal_code: Optional[str]
+    unit: Unit
+    unit_price_cents: int
+    qty_milli: int
+    line_total_cents: int
+
+
+class SaleOut(StrictBase):
+    id: int
+    number: int
+    user_id: int
+    status: SaleStatus
+    subtotal_cents: int
+    discount_cents: int
+    total_cents: int
+    created_at: datetime
+    finalized_at: Optional[datetime]
+    cancel_reason: Optional[str]
+    items: list[SaleItemOut] = Field(default_factory=list)
