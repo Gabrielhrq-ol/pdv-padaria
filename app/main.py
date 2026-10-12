@@ -1,0 +1,178 @@
+"""
+Bootstrap do FastAPI com todas as regras de seguranca da Fase 1.
+
+Checklist (ver CLAUDE.md secao Seguranca):
+- TrustedHostMiddleware aceita so 127.0.0.1 e localhost.
+- Headers injetados: CSP self, nosniff, DENY, no-referrer.
+- /docs, /redoc, /openapi.json desligados fora de ENVIRONMENT=development.
+- Exception handler nunca retorna stack trace; loga internamente.
+- Jinja2 com autoescape ligado.
+- Nenhum CORS liberado.
+"""
+
+from __future__ import annotations
+
+import logging
+from pathlib import Path
+
+from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.responses import HTMLResponse, Response
+
+from app.config import get_settings
+from app.routers import products as products_router
+
+# ---------- logging interno ----------
+
+LOG_DIR = Path(__file__).resolve().parent.parent / "logs"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s",
+    handlers=[
+        logging.FileHandler(LOG_DIR / "pdv.log", encoding="utf-8"),
+        logging.StreamHandler(),
+    ],
+)
+logger = logging.getLogger("app")
+
+
+# ---------- app ----------
+
+settings = get_settings()
+
+app = FastAPI(
+    title="PDV Padaria",
+    version="0.1.0",
+    # /docs, /redoc e /openapi.json somente em development.
+    docs_url="/docs" if settings.is_development else None,
+    redoc_url="/redoc" if settings.is_development else None,
+    openapi_url="/openapi.json" if settings.is_development else None,
+)
+
+# ---------- middlewares ----------
+
+# Protege contra DNS rebinding e requisicoes com Host arbitrario.
+# Starlette compara so o nome do host (ignora porta), entao basta listar os nomes.
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=["127.0.0.1", "localhost"],
+)
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Injeta cabecalhos de seguranca em TODAS as respostas."""
+
+    _CSP = (
+        "default-src 'self'; "
+        "img-src 'self' data:; "
+        "style-src 'self'; "
+        "script-src 'self'; "
+        "font-src 'self'; "
+        "connect-src 'self'; "
+        "form-action 'self'; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'"
+    )
+
+    async def dispatch(self, request: Request, call_next):  # type: ignore[no-untyped-def]
+        response: Response = await call_next(request)
+        response.headers["Content-Security-Policy"] = self._CSP
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["Permissions-Policy"] = (
+            "geolocation=(), microphone=(), camera=()"
+        )
+        return response
+
+
+app.add_middleware(SecurityHeadersMiddleware)
+
+
+# ---------- handlers de erro ----------
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    # HTTPExceptions tem detalhe legivel e sao esperadas (404, 409, etc.).
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    # 422: entrada invalida. Log minimo, resposta estruturada mas sem vazar.
+    logger.info("Validation error em %s: %s", request.url.path, exc.errors())
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": "Dados invalidos.", "errors": exc.errors()},
+    )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    # Nunca vaza stack trace. Loga internamente com stack completo.
+    logger.exception("Erro nao tratado em %s: %s", request.url.path, exc)
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": "Erro interno. Verifique os logs."},
+    )
+
+
+# ---------- static e templates ----------
+
+BASE_DIR = Path(__file__).resolve().parent
+app.mount(
+    "/static",
+    StaticFiles(directory=str(BASE_DIR / "static")),
+    name="static",
+)
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+# Jinja2Templates ja vem com autoescape ativado para html/xml por padrao.
+
+
+# ---------- rotas de UI ----------
+
+
+@app.get("/", include_in_schema=False)
+async def root() -> HTMLResponse:
+    html = (
+        "<!doctype html><html lang='pt-br'><meta charset='utf-8'>"
+        "<title>PDV Padaria</title>"
+        "<body style='font-family:sans-serif'>"
+        "<h1>PDV Padaria</h1>"
+        "<p>Fase 1 - Esqueleto e cadastro de produtos.</p>"
+        "<p><a href='/products'>Produtos</a></p>"
+        "</body></html>"
+    )
+    return HTMLResponse(content=html)
+
+
+@app.get("/products", include_in_schema=False, response_class=HTMLResponse)
+async def products_page(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(
+        request=request,
+        name="products.html",
+        context={"env": settings.ENVIRONMENT},
+    )
+
+
+@app.get("/health", include_in_schema=False)
+async def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+# ---------- API ----------
+
+app.include_router(products_router.router)

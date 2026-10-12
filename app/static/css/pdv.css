@@ -1,0 +1,280 @@
+/* PDV Padaria - CSS leve para PC antigo (Dell Inspiron 620, 12GB).
+   Sem animacoes pesadas. Funciona em 1280x720, 1366x768, 1280x1024. */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: Verdana, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #1a1a1a;
+  background: #f3f3f3;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #1f3a5f;
+  color: #fff;
+  border-bottom: 2px solid #142847;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.env-badge {
+  font-size: 11px;
+  background: #ffcf33;
+  color: #1a1a1a;
+  padding: 2px 8px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 20px 60px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.toolbar input[type="search"] {
+  flex: 1 1 300px;
+  padding: 8px 10px;
+  border: 1px solid #999;
+  border-radius: 3px;
+  font-size: 14px;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.feedback {
+  min-height: 20px;
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+.feedback.ok { color: #0a6b1b; }
+.feedback.erro { color: #a71e1e; }
+
+.table-wrapper {
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.table-produtos {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.table-produtos th,
+.table-produtos td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid #e5e5e5;
+  font-size: 13px;
+}
+
+.table-produtos th {
+  background: #e8ecf1;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.3px;
+}
+
+.table-produtos .num { text-align: right; }
+.table-produtos .actions { text-align: center; width: 170px; }
+
+.table-produtos tr.inativo td {
+  color: #888;
+  background: #fafafa;
+  font-style: italic;
+}
+
+.btn {
+  display: inline-block;
+  padding: 6px 14px;
+  border: 1px solid #999;
+  background: #fff;
+  color: #1a1a1a;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.btn:hover { background: #eee; }
+
+.btn-primary {
+  background: #1f3a5f;
+  color: #fff;
+  border-color: #142847;
+}
+
+.btn-primary:hover { background: #142847; }
+
+.btn-danger {
+  color: #a71e1e;
+  border-color: #a71e1e;
+}
+
+.btn-danger:hover {
+  background: #a71e1e;
+  color: #fff;
+}
+
+.btn-sm { padding: 3px 8px; font-size: 12px; }
+
+.empty-state {
+  text-align: center;
+  padding: 24px;
+  color: #666;
+  font-style: italic;
+}
+
+/* ---------- modal ---------- */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  z-index: 100;
+  overflow-y: auto;
+  padding: 40px 20px;
+}
+
+.modal[hidden] { display: none; }
+
+.modal-content {
+  background: #fff;
+  width: 100%;
+  max-width: 640px;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #666;
+  padding: 2px 8px;
+}
+
+.btn-close:hover { color: #a71e1e; }
+
+#form-produto {
+  padding: 16px 20px;
+}
+
+.form-row {
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-row label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  color: #333;
+}
+
+.form-row input[type="text"],
+.form-row input[type="number"],
+.form-row select {
+  padding: 7px 9px;
+  border: 1px solid #999;
+  border-radius: 3px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.form-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.form-row-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.erro-form {
+  background: #fde8e8;
+  border: 1px solid #a71e1e;
+  color: #a71e1e;
+  padding: 8px 12px;
+  border-radius: 3px;
+  margin: 10px 0;
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+/* ---------- responsivo (1280 e menores) ---------- */
+
+@media (max-width: 1280px) {
+  .container { padding: 12px 14px; }
+  .page-header { padding: 10px 14px; }
+  .page-header h1 { font-size: 18px; }
+}

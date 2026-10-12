@@ -1,0 +1,17 @@
+{
+  "_comment": "Copie este arquivo para data/cliente.json e preencha com os dados REAIS do cliente. data/cliente.json e ignorado pelo Git. Nunca commitar dados reais.",
+  "store_name": "PADARIA DEMO",
+  "store_cnpj": "00.000.000/0000-00",
+  "store_address": "Rua Exemplo, 123 - Cidade/UF",
+  "store_phone": "(00) 0000-0000",
+  "receipt_header_extra": "",
+  "receipt_footer": "Obrigado e volte sempre!",
+  "receipt_columns": 32,
+  "receipt_show_barcode": false,
+  "receipt_disclaimer": "DOCUMENTO SEM VALOR FISCAL",
+  "printer_name": "",
+  "printer_codepage": "",
+  "printer_auto_cut": false,
+  "allow_negative_stock": true,
+  "default_print_after_sale": true
+}

@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Produtos - PDV Padaria</title>
+  <link rel="stylesheet" href="/static/css/pdv.css">
+</head>
+<body>
+  <header class="page-header">
+    <h1>Produtos</h1>
+    <div class="header-actions">
+      <span class="env-badge">{{ env }}</span>
+      <button type="button" id="btn-novo" class="btn btn-primary">+ Novo produto</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="toolbar">
+      <input
+        type="search"
+        id="busca"
+        placeholder="Buscar por nome, codigo de barras ou codigo interno"
+        maxlength="120"
+        autocomplete="off"
+        autofocus>
+      <label class="toggle">
+        <input type="checkbox" id="chk-inativos">
+        <span>Mostrar inativos</span>
+      </label>
+    </section>
+
+    <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+
+    <div class="table-wrapper">
+      <table id="tabela-produtos" class="table-produtos">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Codigo de barras</th>
+            <th>Codigo interno</th>
+            <th>Un.</th>
+            <th class="num">Preco</th>
+            <th class="num">Estoque</th>
+            <th>Ativo</th>
+            <th>Favorito</th>
+            <th class="actions">Acoes</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-produtos"></tbody>
+      </table>
+      <p id="tabela-vazia" class="empty-state" hidden>Nenhum produto encontrado.</p>
+    </div>
+  </main>
+
+  <!-- Modal de cadastro / edicao -->
+  <div id="modal-produto" class="modal" hidden aria-modal="true" role="dialog">
+    <div class="modal-content">
+      <header class="modal-header">
+        <h2 id="modal-titulo">Novo produto</h2>
+        <button type="button" class="btn-close" id="btn-fechar-modal" aria-label="Fechar">x</button>
+      </header>
+      <form id="form-produto" novalidate>
+        <input type="hidden" id="field-id">
+
+        <div class="form-row">
+          <label for="field-name">Nome *</label>
+          <input type="text" id="field-name" required maxlength="120">
+        </div>
+
+        <div class="form-row-grid">
+          <div class="form-row">
+            <label for="field-barcode">Codigo de barras</label>
+            <input type="text" id="field-barcode" maxlength="20" pattern="\d*" inputmode="numeric">
+          </div>
+          <div class="form-row">
+            <label for="field-internal_code">Codigo interno</label>
+            <input type="text" id="field-internal_code" maxlength="10" pattern="[A-Za-z0-9]*">
+          </div>
+        </div>
+
+        <div class="form-row-grid">
+          <div class="form-row">
+            <label for="field-unit">Unidade *</label>
+            <select id="field-unit" required>
+              <option value="UN">UN</option>
+              <option value="KG">KG</option>
+              <option value="L">L</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label for="field-price">Preco (R$) *</label>
+            <input type="text" id="field-price" required inputmode="decimal" placeholder="0,00">
+          </div>
+          <div class="form-row">
+            <label for="field-cost">Custo (R$)</label>
+            <input type="text" id="field-cost" inputmode="decimal" placeholder="opcional">
+          </div>
+        </div>
+
+        <div class="form-row-grid">
+          <div class="form-row">
+            <label for="field-stock">Estoque</label>
+            <input type="text" id="field-stock" inputmode="decimal" placeholder="0">
+          </div>
+          <div class="form-row">
+            <label for="field-min_stock">Estoque minimo</label>
+            <input type="text" id="field-min_stock" inputmode="decimal" placeholder="0">
+          </div>
+          <div class="form-row">
+            <label for="field-favorite">Favorito</label>
+            <input type="checkbox" id="field-favorite">
+          </div>
+        </div>
+
+        <div id="erro-form" class="erro-form" hidden></div>
+
+        <div class="modal-actions">
+          <button type="button" id="btn-cancelar" class="btn">Cancelar</button>
+          <button type="submit" id="btn-salvar" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/js/products.js"></script>
+</body>
+</html>
