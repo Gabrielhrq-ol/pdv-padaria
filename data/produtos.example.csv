@@ -1,0 +1,13 @@
+name,barcode,internal_code,category,unit,price,stock,min_stock,favorite
+Pao frances,,101,Paes,KG,"18,00",10,"1,000",true
+Pao de queijo,,102,Paes,UN,"3,50",50,10,true
+Pao doce,,103,Paes,UN,"5,00",30,5,true
+Bolo chocolate fatia,,201,Doces,UN,"7,00",10,2,true
+Sonho,,202,Doces,UN,"6,00",20,3,false
+Coxinha,,301,Salgados,UN,"6,50",20,5,true
+Esfiha,,302,Salgados,UN,"6,00",20,3,false
+Cafe xicara,,401,Bebidas,UN,"4,00",100,10,true
+Refrigerante 2L,7891111111117,,Bebidas,UN,"R$ 12,00",24,5,false
+Agua mineral 500ml,7891111111124,,Bebidas,UN,"4,00",50,10,false
+Biscoito recheado,7891111111131,,Mercearia,UN,"7,00",30,5,false
+Leite integral 1L,7891111111148,,Mercearia,L,"6,50","15,000","2,000",false
