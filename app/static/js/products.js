@@ -122,15 +122,41 @@
     }
   }
 
+  // ---------- CSRF ----------
+
+  function readCookie(name) {
+    const pairs = document.cookie ? document.cookie.split(';') : [];
+    for (let i = 0; i < pairs.length; i++) {
+      const kv = pairs[i].trim().split('=');
+      if (kv[0] === name) return decodeURIComponent(kv.slice(1).join('='));
+    }
+    return '';
+  }
+
   // ---------- fetch wrapper ----------
 
   async function apiFetch(path, options) {
-    const resp = await fetch(path, Object.assign({
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    }, options || {}));
+    const opts = Object.assign({}, options || {});
+    opts.headers = Object.assign({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    }, opts.headers || {});
+    const method = (opts.method || 'GET').toUpperCase();
+    if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+      const csrf = readCookie('csrf_token');
+      if (csrf) opts.headers['X-CSRF-Token'] = csrf;
+    }
+    const resp = await fetch(path, opts);
     const contentType = resp.headers.get('content-type') || '';
     const isJson = contentType.indexOf('application/json') >= 0;
     const body = isJson ? await resp.json() : await resp.text();
+    if (resp.status === 401) {
+      // Sessao expirada / nao autenticado -> volta pro login
+      window.location.assign('/login');
+      const err = new Error('Nao autenticado.');
+      err.status = 401;
+      throw err;
+    }
     if (!resp.ok) {
       let msg = (body && body.detail) || resp.statusText || 'Erro.';
       if (body && Array.isArray(body.errors)) {
@@ -142,6 +168,16 @@
       throw err;
     }
     return body;
+  }
+
+  async function doLogout() {
+    try {
+      await fetch('/auth/logout', {
+        method: 'POST',
+        headers: { 'X-CSRF-Token': readCookie('csrf_token') },
+      });
+    } catch (_) { /* ignora */ }
+    window.location.assign('/login');
   }
 
   // ---------- render ----------
@@ -352,6 +388,8 @@
     document.getElementById('form-produto').addEventListener('submit', submitForm);
     document.getElementById('busca').addEventListener('input', debounce(loadProducts, 250));
     document.getElementById('chk-inativos').addEventListener('change', loadProducts);
+    const btnSair = document.getElementById('btn-sair');
+    if (btnSair) btnSair.addEventListener('click', doLogout);
     document.addEventListener('keydown', (ev) => {
       if (ev.key === 'Escape' && !document.getElementById('modal-produto').hidden) {
         closeModal();

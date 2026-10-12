@@ -15,7 +15,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -24,7 +24,12 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.responses import HTMLResponse, Response
 
+from fastapi.responses import RedirectResponse
+
 from app.config import get_settings
+from app.dependencies import get_optional_user
+from app.models import User
+from app.routers import auth as auth_router
 from app.routers import products as products_router
 
 # ---------- logging interno ----------
@@ -146,25 +151,41 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
 @app.get("/", include_in_schema=False)
-async def root() -> HTMLResponse:
-    html = (
-        "<!doctype html><html lang='pt-br'><meta charset='utf-8'>"
-        "<title>PDV Padaria</title>"
-        "<body style='font-family:sans-serif'>"
-        "<h1>PDV Padaria</h1>"
-        "<p>Fase 1 - Esqueleto e cadastro de produtos.</p>"
-        "<p><a href='/products'>Produtos</a></p>"
-        "</body></html>"
+async def root(user: User | None = Depends(get_optional_user)) -> RedirectResponse:
+    if user is None:
+        return RedirectResponse(url="/login", status_code=302)
+    return RedirectResponse(url="/products", status_code=302)
+
+
+@app.get("/login", include_in_schema=False, response_model=None)
+async def login_page(
+    request: Request,
+    user: User | None = Depends(get_optional_user),
+) -> HTMLResponse | RedirectResponse:
+    # Se ja esta logado, nao mostra o form.
+    if user is not None:
+        return RedirectResponse(url="/products", status_code=302)
+    return templates.TemplateResponse(
+        request=request,
+        name="login.html",
+        context={"env": settings.ENVIRONMENT},
     )
-    return HTMLResponse(content=html)
 
 
-@app.get("/products", include_in_schema=False, response_class=HTMLResponse)
-async def products_page(request: Request) -> HTMLResponse:
+@app.get("/products", include_in_schema=False, response_model=None)
+async def products_page(
+    request: Request,
+    user: User | None = Depends(get_optional_user),
+) -> HTMLResponse | RedirectResponse:
+    if user is None:
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         request=request,
         name="products.html",
-        context={"env": settings.ENVIRONMENT},
+        context={
+            "env": settings.ENVIRONMENT,
+            "user": {"name": user.name, "username": user.username, "role": user.role},
+        },
     )
 
 
@@ -175,4 +196,5 @@ async def health() -> dict[str, str]:
 
 # ---------- API ----------
 
+app.include_router(auth_router.router)
 app.include_router(products_router.router)

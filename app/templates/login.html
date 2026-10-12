@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Entrar - PDV Padaria{% endblock %}
+{% block body_class %}login-body{% endblock %}
+
+{% block body %}
+<main class="login-wrapper">
+  <div class="login-card">
+    <header class="login-header">
+      <h1>PDV Padaria</h1>
+      <p class="login-sub">Entre para continuar</p>
+    </header>
+
+    <form id="form-login" novalidate>
+      <div class="form-row">
+        <label for="field-username">Usuario</label>
+        <input
+          type="text"
+          id="field-username"
+          name="username"
+          autocomplete="username"
+          maxlength="50"
+          required
+          autofocus
+          pattern="[A-Za-z0-9._\-]+">
+      </div>
+
+      <div class="form-row">
+        <label for="field-password">Senha</label>
+        <input
+          type="password"
+          id="field-password"
+          name="password"
+          autocomplete="current-password"
+          maxlength="200"
+          required>
+      </div>
+
+      <div id="erro-login" class="erro-form" hidden></div>
+
+      <button type="submit" id="btn-entrar" class="btn btn-primary btn-block">
+        Entrar
+      </button>
+    </form>
+
+    <footer class="login-footer">
+      <span class="env-badge">{{ env }}</span>
+    </footer>
+  </div>
+</main>
+<script src="/static/js/auth.js"></script>
+{% endblock %}

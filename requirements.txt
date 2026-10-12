@@ -1,7 +1,6 @@
-# Dependências de produção da Fase 1.
+# Dependências de produção da Fase 2.
 # Versões fixadas (pin exato).
 # python-escpos entra na Fase 5 (impressora).
-# argon2-cffi entra na Fase 2 (login).
 
 fastapi==0.115.6
 uvicorn[standard]==0.32.1
@@ -10,3 +9,5 @@ alembic==1.14.0
 pydantic==2.10.3
 pydantic-settings==2.6.1
 Jinja2==3.1.4
+argon2-cffi==23.1.0
+itsdangerous==2.2.0

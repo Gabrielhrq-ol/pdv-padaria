@@ -35,6 +35,17 @@ html, body {
   gap: 12px;
 }
 
+.user-info {
+  color: #fff;
+  font-size: 13px;
+}
+
+.user-info small {
+  opacity: 0.7;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
 .env-badge {
   font-size: 11px;
   background: #ffcf33;
@@ -269,6 +280,62 @@ html, body {
   margin-top: 16px;
   padding-top: 12px;
   border-top: 1px solid #eee;
+}
+
+/* ---------- login ---------- */
+
+.login-body {
+  background: linear-gradient(135deg, #1f3a5f 0%, #142847 100%);
+  min-height: 100vh;
+  margin: 0;
+}
+
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.login-card {
+  background: #fff;
+  border-radius: 6px;
+  padding: 32px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.login-header h1 {
+  margin: 0 0 4px;
+  font-size: 22px;
+  color: #1f3a5f;
+}
+
+.login-sub {
+  margin: 0;
+  color: #666;
+  font-size: 13px;
+}
+
+.btn-block {
+  width: 100%;
+  padding: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.login-footer {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 11px;
 }
 
 /* ---------- responsivo (1280 e menores) ---------- */

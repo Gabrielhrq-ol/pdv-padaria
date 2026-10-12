@@ -32,11 +32,12 @@ from app.db import Base
 
 
 def utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    """Naive UTC. Alinhado com app.security.utc_now."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class User(Base):
-    """Usuario do sistema. Fase 2 implementa autenticacao."""
+    """Usuario do sistema. Fase 2 implementa autenticacao + bloqueio."""
 
     __tablename__ = "users"
 
@@ -49,9 +50,22 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=utc_now
     )
+    # Fase 2: controle de tentativas de login
+    failed_login_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0
+    )
+    locked_until: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    last_login_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     __table_args__ = (
         CheckConstraint("role IN ('admin', 'caixa')", name="ck_users_role"),
+        CheckConstraint(
+            "failed_login_count >= 0", name="ck_users_failed_count_non_negative"
+        ),
     )
 
 
@@ -120,6 +134,35 @@ class Product(Base):
         Index("ix_products_internal_code", "internal_code"),
         Index("ix_products_name", "name"),
         Index("ix_products_active", "active"),
+    )
+
+
+class AuditLog(Base):
+    """
+    Registro de acoes sensiveis (CLAUDE.md regra 11).
+
+    Nunca contem senha, token ou dado sensivel em `details`.
+    """
+
+    __tablename__ = "audit_log"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("users.id"), nullable=True
+    )
+    action: Mapped[str] = mapped_column(String(60), nullable=False)
+    entity: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
+    entity_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    details: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    ip: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+
+    __table_args__ = (
+        Index("ix_audit_log_user_id", "user_id"),
+        Index("ix_audit_log_action", "action"),
+        Index("ix_audit_log_created_at", "created_at"),
     )
 
 

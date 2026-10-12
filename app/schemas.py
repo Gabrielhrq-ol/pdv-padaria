@@ -133,6 +133,36 @@ class ActiveUpdate(StrictBase):
     active: bool
 
 
+# ---------- Auth ----------
+
+
+UsernameStr = Annotated[
+    str,
+    StringConstraints(min_length=3, max_length=50, pattern=r"^[A-Za-z0-9._-]+$"),
+]
+
+
+class LoginRequest(StrictBase):
+    username: UsernameStr
+    password: Annotated[str, StringConstraints(min_length=1, max_length=200)]
+
+
+class UserOut(StrictBase):
+    id: int
+    name: str
+    username: str
+    role: Role
+    active: bool
+
+
+class LoginResponse(StrictBase):
+    user: UserOut
+    csrf_token: str
+
+
+# ---------- Product ----------
+
+
 class ProductOut(StrictBase):
     id: int
     name: str
