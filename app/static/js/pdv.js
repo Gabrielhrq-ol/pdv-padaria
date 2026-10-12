@@ -474,11 +474,10 @@
   }
 
   function handleGlobalKey(ev) {
-    // F2..F10 e Esc / setas
-    if (ev.key === 'Escape') {
-      closeAllModals();
-      return;
-    }
+    // Esc fecha modais
+    if (ev.key === 'Escape') { closeAllModals(); return; }
+
+    // F2..F10 (teclado desktop)
     if (ev.key === 'F2') { ev.preventDefault(); openBusca(); return; }
     if (ev.key === 'F3') { ev.preventDefault(); changeQtySelected(); return; }
     if (ev.key === 'F4') { ev.preventDefault(); removeSelected(); return; }
@@ -493,6 +492,23 @@
       ev.preventDefault();
       showToast('Reimprimir disponivel na Fase 5');
       return;
+    }
+
+    // Ctrl+letra (alternativa para notebook, onde F2-F9 sao sobrepostos
+    // por brilho/volume/midia). Previne o default do browser.
+    if (ev.ctrlKey && !ev.shiftKey && !ev.altKey && !ev.metaKey) {
+      const k = ev.key.toLowerCase();
+      if (k === 'b') { ev.preventDefault(); openBusca(); return; }
+      if (k === 'q') { ev.preventDefault(); changeQtySelected(); return; }
+      if (k === 'd') { ev.preventDefault(); removeSelected(); return; }
+      if (k === 'x') {
+        // Nao conflita com cortar se nao houver selecao de texto;
+        // em modais com input esse ramo nao executa (eventos param antes).
+        if (!document.querySelector('.modal:not([hidden])')) {
+          ev.preventDefault(); openCancelModal(); return;
+        }
+      }
+      if (k === 'i') { ev.preventDefault(); openPreco(); return; }
     }
     // Navegacao com setas na lista
     if ((ev.key === 'ArrowUp' || ev.key === 'ArrowDown') && currentSale && currentSale.items.length) {
@@ -509,10 +525,31 @@
     }
   }
 
+  function handleShortcutClick(ev) {
+    const btn = ev.currentTarget;
+    if (btn.classList.contains('disabled')) {
+      const action = btn.dataset.action;
+      if (action === 'pagar') showToast('Pagamento disponivel na Fase 4');
+      if (action === 'reimprimir') showToast('Reimprimir disponivel na Fase 5');
+      return;
+    }
+    const action = btn.dataset.action;
+    if (action === 'buscar') return openBusca();
+    if (action === 'qty') return changeQtySelected();
+    if (action === 'remover') return removeSelected();
+    if (action === 'cancelar') return openCancelModal();
+    if (action === 'preco') return openPreco();
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('pdv-code').addEventListener('keydown', handleCodeEnter);
     document.getElementById('btn-sair').addEventListener('click', doLogout);
     document.addEventListener('keydown', handleGlobalKey);
+
+    // Botoes do rodape (notebook-friendly)
+    document.querySelectorAll('.shortcut-btn').forEach(btn => {
+      btn.addEventListener('click', handleShortcutClick);
+    });
 
     // Modais - botoes de fechar
     document.querySelectorAll('[data-close]').forEach(btn => {

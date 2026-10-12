@@ -64,14 +64,36 @@
 </main>
 
 <footer class="pdv-shortcuts">
-  <span><kbd>F2</kbd> Buscar</span>
-  <span><kbd>F3</kbd> Alterar qtd</span>
-  <span><kbd>F4</kbd> Remover</span>
-  <span class="disabled" title="Disponivel na Fase 4"><kbd>F6</kbd> Pagar</span>
-  <span><kbd>F8</kbd> Cancelar venda</span>
-  <span><kbd>F9</kbd> Consultar preco</span>
-  <span class="disabled" title="Disponivel na Fase 5"><kbd>F10</kbd> Reimprimir</span>
-  <span><kbd>Esc</kbd> Fechar</span>
+  <button type="button" class="shortcut-btn" data-action="buscar">
+    <span class="shortcut-label">Buscar</span>
+    <span class="shortcut-keys"><kbd>F2</kbd> ou <kbd>Ctrl</kbd>+<kbd>B</kbd></span>
+  </button>
+  <button type="button" class="shortcut-btn" data-action="qty">
+    <span class="shortcut-label">Alterar qtd</span>
+    <span class="shortcut-keys"><kbd>F3</kbd> ou <kbd>Ctrl</kbd>+<kbd>Q</kbd></span>
+  </button>
+  <button type="button" class="shortcut-btn" data-action="remover">
+    <span class="shortcut-label">Remover</span>
+    <span class="shortcut-keys"><kbd>F4</kbd> ou <kbd>Ctrl</kbd>+<kbd>D</kbd></span>
+  </button>
+  <button type="button" class="shortcut-btn disabled" data-action="pagar"
+          title="Disponivel na Fase 4">
+    <span class="shortcut-label">Pagar</span>
+    <span class="shortcut-keys"><kbd>F6</kbd> (Fase 4)</span>
+  </button>
+  <button type="button" class="shortcut-btn shortcut-danger" data-action="cancelar">
+    <span class="shortcut-label">Cancelar venda</span>
+    <span class="shortcut-keys"><kbd>F8</kbd> ou <kbd>Ctrl</kbd>+<kbd>X</kbd></span>
+  </button>
+  <button type="button" class="shortcut-btn" data-action="preco">
+    <span class="shortcut-label">Consultar preco</span>
+    <span class="shortcut-keys"><kbd>F9</kbd> ou <kbd>Ctrl</kbd>+<kbd>I</kbd></span>
+  </button>
+  <button type="button" class="shortcut-btn disabled" data-action="reimprimir"
+          title="Disponivel na Fase 5">
+    <span class="shortcut-label">Reimprimir</span>
+    <span class="shortcut-keys"><kbd>F10</kbd> (Fase 5)</span>
+  </button>
 </footer>
 
 <!-- Modal de busca por nome (F2) -->
