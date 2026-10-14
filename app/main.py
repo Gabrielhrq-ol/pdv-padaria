@@ -26,11 +26,15 @@ from starlette.responses import HTMLResponse, Response
 
 from fastapi.responses import RedirectResponse
 
+from sqlalchemy.orm import Session
+
 from app.config import get_settings
+from app.db import get_db
 from app.dependencies import get_optional_user
 from app.models import User
 from app.routers import admin as admin_router
 from app.routers import auth as auth_router
+from app.routers import cash as cash_router
 from app.routers import products as products_router
 from app.routers import sales as sales_router
 
@@ -195,12 +199,35 @@ async def products_page(
 async def pdv_page(
     request: Request,
     user: User | None = Depends(get_optional_user),
+    db: Session = Depends(get_db),
+) -> HTMLResponse | RedirectResponse:
+    if user is None:
+        return RedirectResponse(url="/login", status_code=302)
+    # Guard: se cash required e nao ha caixa aberto, manda pra /caixa
+    from app.services.cash_service import get_open_session, is_cash_required
+
+    if is_cash_required(db) and get_open_session(db) is None:
+        return RedirectResponse(url="/caixa?msg=abra", status_code=302)
+    return templates.TemplateResponse(
+        request=request,
+        name="pdv.html",
+        context={
+            "env": settings.ENVIRONMENT,
+            "user": {"name": user.name, "username": user.username, "role": user.role},
+        },
+    )
+
+
+@app.get("/caixa", include_in_schema=False, response_model=None)
+async def caixa_page(
+    request: Request,
+    user: User | None = Depends(get_optional_user),
 ) -> HTMLResponse | RedirectResponse:
     if user is None:
         return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         request=request,
-        name="pdv.html",
+        name="caixa.html",
         context={
             "env": settings.ENVIRONMENT,
             "user": {"name": user.name, "username": user.username, "role": user.role},
@@ -257,3 +284,5 @@ app.include_router(auth_router.router)
 app.include_router(products_router.router)
 app.include_router(sales_router.router)
 app.include_router(admin_router.router)
+app.include_router(cash_router.router)
+app.include_router(cash_router.admin_router)

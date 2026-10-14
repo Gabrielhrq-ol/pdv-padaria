@@ -299,6 +299,100 @@ class StockMovement(Base):
     )
 
 
+class CashSession(Base):
+    """
+    Sessao de caixa (Fase 7). So uma pode estar com status='open' no sistema
+    todo (validado em cash_service, nao no banco, pois seria um partial index).
+
+    opening_cash_cents: dinheiro em especie na abertura (declarado).
+    closing_cash_declared_cents: dinheiro contado no fechamento (declarado).
+    closing_cash_expected_cents: calculado em close_session.
+    closing_difference_cents: declarado - esperado (signed; sobra +, falta -).
+    difference_reason: obrigatorio se closing_difference_cents != 0.
+    """
+
+    __tablename__ = "cash_sessions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    status: Mapped[str] = mapped_column(String(10), nullable=False, default="open")
+    opened_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    opened_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+    opening_cash_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    closed_by: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("users.id"), nullable=True
+    )
+    closed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    closing_cash_declared_cents: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True
+    )
+    closing_cash_expected_cents: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True
+    )
+    closing_difference_cents: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True
+    )
+    difference_reason: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    notes: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('open', 'closed')", name="ck_cash_sessions_status"
+        ),
+        CheckConstraint(
+            "opening_cash_cents >= 0", name="ck_cash_sessions_opening_non_negative"
+        ),
+        CheckConstraint(
+            "closing_cash_declared_cents IS NULL OR closing_cash_declared_cents >= 0",
+            name="ck_cash_sessions_declared_non_negative",
+        ),
+        Index("ix_cash_sessions_status", "status"),
+        Index("ix_cash_sessions_opened_at", "opened_at"),
+    )
+
+
+class CashMovement(Base):
+    """
+    Movimentacao manual de dinheiro no caixa (sangria ou suprimento).
+    Nao inclui dinheiro de vendas - esse vem de payments.method='dinheiro'.
+
+    amount_cents sempre > 0; o sinal vem do tipo:
+    - sangria   = saida de dinheiro (-)
+    - suprimento = entrada de dinheiro (+)
+    """
+
+    __tablename__ = "cash_movements"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    cash_session_id: Mapped[int] = mapped_column(
+        ForeignKey("cash_sessions.id"), nullable=False
+    )
+    type: Mapped[str] = mapped_column(String(12), nullable=False)
+    amount_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    reason: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "type IN ('sangria', 'suprimento')", name="ck_cash_movements_type"
+        ),
+        CheckConstraint(
+            "amount_cents > 0", name="ck_cash_movements_amount_positive"
+        ),
+        Index(
+            "ix_cash_movements_session_created",
+            "cash_session_id",
+            "created_at",
+        ),
+    )
+
+
 class AuditLog(Base):
     """
     Registro de acoes sensiveis (CLAUDE.md regra 11).

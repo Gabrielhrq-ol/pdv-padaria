@@ -391,3 +391,121 @@ class LowStockOut(StrictBase):
     unit: Unit
     stock_milli: int
     min_stock_milli: int
+
+
+# ---------- Cash (Fase 7) ----------
+
+CashSessionStatus = Literal["open", "closed"]
+CashMovementType = Literal["sangria", "suprimento"]
+
+CashReasonRequired = Annotated[
+    str,
+    StringConstraints(min_length=3, max_length=200, strip_whitespace=True),
+]
+CashReasonOptional = Annotated[
+    str,
+    StringConstraints(max_length=200, strip_whitespace=True),
+]
+CashNotes = Annotated[
+    str,
+    StringConstraints(max_length=500, strip_whitespace=True),
+]
+
+
+class CashOpenIn(StrictBase):
+    """Abre uma sessao de caixa."""
+
+    opening_cash_cents: int = Field(..., ge=0, le=100_000_000)
+    notes: Optional[CashNotes] = None
+
+
+class CashSangriaIn(StrictBase):
+    """Sangria: saida de dinheiro manual. Motivo OBRIGATORIO."""
+
+    amount_cents: int = Field(..., ge=1, le=100_000_000)
+    reason: CashReasonRequired
+
+
+class CashSuprimentoIn(StrictBase):
+    """Suprimento: entrada de dinheiro manual. Motivo OPCIONAL."""
+
+    amount_cents: int = Field(..., ge=1, le=100_000_000)
+    reason: Optional[CashReasonOptional] = None
+
+    @field_validator("reason")
+    @classmethod
+    def _empty_reason_as_none(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        s = v.strip()
+        return s or None
+
+
+class CashCloseIn(StrictBase):
+    """
+    Fecha a sessao atual.
+    - declared_cash_cents: dinheiro contado fisicamente.
+    - difference_reason: obrigatorio se declared != esperado.
+    """
+
+    declared_cash_cents: int = Field(..., ge=0, le=100_000_000)
+    difference_reason: Optional[CashReasonOptional] = None
+
+    @field_validator("difference_reason")
+    @classmethod
+    def _empty_reason_as_none(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        s = v.strip()
+        return s or None
+
+
+class CashRequiredToggle(StrictBase):
+    """Liga/desliga o setting cash_session_required."""
+
+    enabled: bool
+
+
+class CashMovementOut(StrictBase):
+    id: int
+    cash_session_id: int
+    type: CashMovementType
+    amount_cents: int
+    reason: Optional[str]
+    user_id: int
+    user_name: Optional[str]
+    created_at: datetime
+
+
+class CashPaymentTotal(StrictBase):
+    method: str
+    total_cents: int
+    count: int
+
+
+class CashSessionOut(StrictBase):
+    id: int
+    status: CashSessionStatus
+    opened_by: int
+    opened_by_name: Optional[str] = None
+    opened_at: datetime
+    opening_cash_cents: int
+    closed_by: Optional[int]
+    closed_by_name: Optional[str] = None
+    closed_at: Optional[datetime]
+    closing_cash_declared_cents: Optional[int]
+    closing_cash_expected_cents: Optional[int]
+    closing_difference_cents: Optional[int]
+    difference_reason: Optional[str]
+    notes: Optional[str]
+
+
+class CashSessionSummaryOut(StrictBase):
+    """Preview em tempo real para a UI de fechamento."""
+
+    session: CashSessionOut
+    movements: list[CashMovementOut] = Field(default_factory=list)
+    payments_by_method: list[CashPaymentTotal] = Field(default_factory=list)
+    sales_cash_cents: int  # dinheiro recebido em vendas finalizadas
+    sales_count: int
+    expected_cash_cents: int  # opening + suprimentos - sangrias + sales_cash

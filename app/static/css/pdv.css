@@ -1006,3 +1006,30 @@ html, body {
 .modal-body {
   padding: 12px 18px 18px;
 }
+
+/* ---------- Fase 7: caixa ---------- */
+
+.caixa-resumo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px 20px;
+  font-size: 14px;
+}
+.caixa-resumo .esperado {
+  grid-column: 1 / -1;
+  padding-top: 8px;
+  border-top: 1px solid #d6d6d6;
+  font-size: 16px;
+}
+
+.caixa-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 900px) {
+  .caixa-grid { grid-template-columns: 1fr; }
+}
+
+.diff-sobra { color: #0a6b1b; }
+.diff-falta { color: #a71e1e; }

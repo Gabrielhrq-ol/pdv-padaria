@@ -95,13 +95,33 @@ def create_open_sale(db: Session, user: User) -> Sale:
     """
     Cria venda nova em open. Se o operador ja tem uma aberta, devolve a
     existente (idempotente, 1 venda ativa por operador).
+
+    Fase 7: se setting `cash_session_required` = true, exige sessao de
+    caixa aberta e carimba cash_session_id na venda.
     """
     existing = get_open_sale(db, user.id)
     if existing is not None:
         return existing
+
+    cash_session_id: Optional[int] = None
+    from app.services.cash_service import get_open_session, is_cash_required
+
+    if is_cash_required(db):
+        open_cash = get_open_session(db)
+        if open_cash is None:
+            raise SalesError(
+                "Abra o caixa antes de iniciar uma venda.", 409
+            )
+        cash_session_id = open_cash.id
+    else:
+        open_cash = get_open_session(db)
+        if open_cash is not None:
+            cash_session_id = open_cash.id
+
     sale = Sale(
         number=_next_sale_number(db),
         user_id=user.id,
+        cash_session_id=cash_session_id,
         status="open",
         subtotal_cents=0,
         discount_cents=0,

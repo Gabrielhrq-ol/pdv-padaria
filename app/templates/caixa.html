@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Caixa - PDV Padaria{% endblock %}
+
+{% block body %}
+<header class="page-header">
+  <h1>Caixa</h1>
+  <div class="header-actions">
+    <span class="env-badge">{{ env }}</span>
+    <span class="user-info">
+      {{ user.name }} <small>({{ user.role }})</small>
+    </span>
+    <a href="/products" class="btn btn-sm">Produtos</a>
+    <a href="/pdv" class="btn btn-sm">PDV</a>
+    {% if user.role == 'admin' %}
+    <a href="/admin/stock" class="btn btn-sm">Estoque</a>
+    <a href="/admin/printer" class="btn btn-sm">Impressora</a>
+    {% endif %}
+    <button type="button" id="btn-sair" class="btn btn-sm">Sair</button>
+  </div>
+</header>
+
+<main class="container admin-container">
+  <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+
+  {% if user.role == 'admin' %}
+  <section class="card">
+    <h2>Configuracao</h2>
+    <label>
+      <input type="checkbox" id="toggle-cash-required">
+      Exigir caixa aberto para vender
+      <small>(quando ligado, PDV so funciona com uma sessao de caixa aberta)</small>
+    </label>
+  </section>
+  {% endif %}
+
+  <!-- SEM CAIXA ABERTO -->
+  <section class="card" id="panel-abrir" hidden>
+    <h2>Abrir caixa</h2>
+    <p class="hint">Informe o fundo de troco inicial em dinheiro.</p>
+    <form id="form-abrir" novalidate>
+      <div class="form-row-grid">
+        <div class="form-row">
+          <label for="abrir-cash">Fundo inicial (R$) *</label>
+          <input type="text" id="abrir-cash" required inputmode="decimal" placeholder="0,00" value="0,00">
+        </div>
+      </div>
+      <div class="form-row">
+        <label for="abrir-notes">Observacoes (opcional)</label>
+        <input type="text" id="abrir-notes" maxlength="500" placeholder="Ex: turno manha, operador X">
+      </div>
+      <div class="erro-form" id="abrir-erro" hidden></div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Abrir caixa</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- COM CAIXA ABERTO -->
+  <section id="panel-aberto" hidden>
+    <section class="card">
+      <h2>Sessao em andamento</h2>
+      <div class="caixa-resumo">
+        <div><strong>Aberto por:</strong> <span id="info-aberto-por">—</span></div>
+        <div><strong>Em:</strong> <span id="info-aberto-em">—</span></div>
+        <div><strong>Fundo inicial:</strong> <span id="info-fundo">—</span></div>
+        <div><strong>Vendas (dinheiro liq.):</strong> <span id="info-vendas-cash">—</span></div>
+        <div><strong>Suprimentos:</strong> <span id="info-suprimentos">—</span></div>
+        <div><strong>Sangrias:</strong> <span id="info-sangrias">—</span></div>
+        <div class="esperado"><strong>Esperado em caixa:</strong> <span id="info-esperado">—</span></div>
+      </div>
+    </section>
+
+    <div class="caixa-grid">
+      <section class="card">
+        <h3>Sangria</h3>
+        <p class="hint">Retirada de dinheiro. Motivo <strong>obrigatorio</strong>.</p>
+        <form id="form-sangria" novalidate>
+          <div class="form-row">
+            <label for="sangria-amount">Valor (R$) *</label>
+            <input type="text" id="sangria-amount" required inputmode="decimal" placeholder="0,00">
+          </div>
+          <div class="form-row">
+            <label for="sangria-reason">Motivo *</label>
+            <input type="text" id="sangria-reason" required maxlength="200"
+                   placeholder="Ex: pagamento fornecedor, levou pro cofre">
+          </div>
+          <div class="erro-form" id="sangria-erro" hidden></div>
+          <div class="form-actions">
+            <button type="submit" class="btn">Registrar sangria</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h3>Suprimento</h3>
+        <p class="hint">Entrada de dinheiro (reforco de troco). Motivo opcional.</p>
+        <form id="form-suprimento" novalidate>
+          <div class="form-row">
+            <label for="supri-amount">Valor (R$) *</label>
+            <input type="text" id="supri-amount" required inputmode="decimal" placeholder="0,00">
+          </div>
+          <div class="form-row">
+            <label for="supri-reason">Motivo (opcional)</label>
+            <input type="text" id="supri-reason" maxlength="200" placeholder="Ex: reforco de troco">
+          </div>
+          <div class="erro-form" id="supri-erro" hidden></div>
+          <div class="form-actions">
+            <button type="submit" class="btn">Registrar suprimento</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <section class="card">
+      <h3>Movimentos manuais da sessao</h3>
+      <table class="table-produtos" id="tabela-movs">
+        <thead>
+          <tr>
+            <th>Hora</th>
+            <th>Tipo</th>
+            <th class="num">Valor</th>
+            <th>Motivo</th>
+            <th>Operador</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-movs"></tbody>
+      </table>
+      <p id="movs-vazio" class="empty-state" hidden>Nenhuma movimentacao manual ainda.</p>
+    </section>
+
+    <section class="card">
+      <h3>Totais por forma de pagamento</h3>
+      <table class="table-produtos" id="tabela-pagamentos">
+        <thead>
+          <tr>
+            <th>Forma</th>
+            <th class="num">Qtd vendas</th>
+            <th class="num">Total</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-pagamentos"></tbody>
+      </table>
+      <p id="pagamentos-vazio" class="empty-state" hidden>Nenhuma venda finalizada ainda nesta sessao.</p>
+    </section>
+
+    <section class="card">
+      <h3>Fechar caixa</h3>
+      <p class="hint">
+        Conte o dinheiro em especie e informe o valor. Se houver diferenca
+        em rela&ccedil;&atilde;o ao esperado, o sistema vai pedir motivo.
+      </p>
+      <form id="form-fechar" novalidate>
+        <div class="form-row-grid">
+          <div class="form-row">
+            <label for="fechar-declarado">Dinheiro contado (R$) *</label>
+            <input type="text" id="fechar-declarado" required inputmode="decimal" placeholder="0,00">
+          </div>
+          <div class="form-row">
+            <label>Esperado</label>
+            <strong id="fechar-esperado">—</strong>
+          </div>
+          <div class="form-row">
+            <label>Diferenca</label>
+            <strong id="fechar-diferenca">—</strong>
+          </div>
+        </div>
+        <div class="form-row" id="row-fechar-reason" hidden>
+          <label for="fechar-reason">Motivo da diferenca *</label>
+          <textarea id="fechar-reason" maxlength="200" rows="2"
+                    placeholder="Ex: faltou troco, cliente levou errado"></textarea>
+        </div>
+        <div class="erro-form" id="fechar-erro" hidden></div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Fechar caixa</button>
+        </div>
+      </form>
+    </section>
+  </section>
+</main>
+
+<script src="/static/js/caixa.js"></script>
+{% endblock %}
