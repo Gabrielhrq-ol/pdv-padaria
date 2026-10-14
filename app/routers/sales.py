@@ -22,16 +22,23 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
+from sqlalchemy import select
+
 from app.db import get_db
 from app.dependencies import require_authenticated, require_csrf
-from app.models import AuditLog, Product, Sale, SaleItem, User
+from app.models import AuditLog, Product, Sale, SaleItem, Setting, User
 from app.schemas import (
+    FinalizeRequest,
+    FinalizeResult,
+    ReverseRequest,
     SaleCancel,
     SaleItemAdd,
     SaleItemUpdate,
     SaleOut,
 )
 from app.services import sales_service
+from app.services.printer import PrintJob, get_printer
+from app.services.receipt import build_receipt_lines
 from app.services.sales_service import SalesError
 
 router = APIRouter(prefix="/api/sales", tags=["sales"])
@@ -105,6 +112,15 @@ def open_sale(
     db.commit()
     db.refresh(sale)
     return sale
+
+
+@router.get("/last-completed", response_model=Optional[SaleOut])
+def last_completed_route(
+    db: Session = Depends(get_db),
+    user: User = Depends(require_authenticated),
+) -> Optional[Sale]:
+    """Ultima venda completed do operador atual (para F10 reimprimir)."""
+    return sales_service.get_last_completed(db, user.id)
 
 
 @router.get("/{sale_id}", response_model=SaleOut)
@@ -256,6 +272,165 @@ def remove_item(
     db.commit()
     db.refresh(sale)
     return sale
+
+
+def _settings_dict(db: Session) -> dict[str, str]:
+    rows = db.execute(select(Setting)).scalars().all()
+    return {r.key: r.value for r in rows}
+
+
+@router.post(
+    "/{sale_id}/finalize",
+    response_model=FinalizeResult,
+    dependencies=[Depends(require_csrf)],
+)
+def finalize(
+    sale_id: int,
+    payload: FinalizeRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_authenticated),
+) -> FinalizeResult:
+    sale = _get_sale_404(db, sale_id)
+    if user.role != "admin" and sale.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Venda de outro operador.")
+    pays = [(p.method, p.amount_cents) for p in payload.payments]
+    try:
+        sales_service.finalize_sale(
+            db,
+            sale,
+            user,
+            pays,
+            discount_cents=payload.discount_cents,
+            discount_reason=payload.discount_reason,
+        )
+    except SalesError as exc:
+        db.rollback()
+        _raise_sales_error(exc)
+
+    _audit(
+        db,
+        user_id=user.id,
+        action="sale_finalized",
+        entity_id=sale.id,
+        details=f"total={sale.total_cents} payments={len(sale.payments)}",
+        ip=_ip(request),
+    )
+    db.commit()
+    db.refresh(sale)
+
+    # Imprimir (CLAUDE.md regra 6: falha de impressao NAO desfaz venda)
+    receipt_lines: list[str] = []
+    printed = False
+    print_error: Optional[str] = None
+
+    if payload.print_receipt:
+        try:
+            receipt_lines = build_receipt_lines(
+                sale,
+                sale.items,
+                sale.payments,
+                _settings_dict(db),
+                operator_name=user.name,
+            )
+            get_printer().print_job(PrintJob(lines=receipt_lines))
+            printed = True
+        except Exception as exc:  # pragma: no cover - defensivo
+            print_error = str(exc)
+
+    return FinalizeResult(
+        sale=SaleOut.model_validate(sale),
+        receipt_lines=receipt_lines,
+        printed=printed,
+        print_error=print_error,
+    )
+
+
+@router.post(
+    "/{sale_id}/reverse",
+    response_model=SaleOut,
+    dependencies=[Depends(require_csrf)],
+)
+def reverse(
+    sale_id: int,
+    payload: ReverseRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_authenticated),
+) -> Sale:
+    sale = _get_sale_404(db, sale_id)
+    if user.role != "admin" and sale.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Venda de outro operador.")
+
+    try:
+        sales_service.reverse_sale(db, sale, user, payload.reason)
+    except SalesError as exc:
+        db.rollback()
+        _raise_sales_error(exc)
+
+    _audit(
+        db,
+        user_id=user.id,
+        action="sale_reversed",
+        entity_id=sale.id,
+        details=payload.reason[:200],
+        ip=_ip(request),
+    )
+    db.commit()
+    db.refresh(sale)
+    return sale
+
+
+@router.post(
+    "/{sale_id}/reprint",
+    response_model=FinalizeResult,
+    dependencies=[Depends(require_csrf)],
+)
+def reprint(
+    sale_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_authenticated),
+) -> FinalizeResult:
+    sale = _get_sale_404(db, sale_id)
+    if user.role != "admin" and sale.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Venda de outro operador.")
+    if sale.status != "completed":
+        raise HTTPException(
+            status_code=400, detail="So e possivel reimprimir venda completed."
+        )
+
+    receipt_lines = build_receipt_lines(
+        sale,
+        sale.items,
+        sale.payments,
+        _settings_dict(db),
+        is_reprint=True,
+        operator_name=user.name,
+    )
+    printed = False
+    print_error: Optional[str] = None
+    try:
+        get_printer().print_job(PrintJob(lines=receipt_lines))
+        printed = True
+    except Exception as exc:  # pragma: no cover
+        print_error = str(exc)
+
+    _audit(
+        db,
+        user_id=user.id,
+        action="sale_reprinted",
+        entity_id=sale.id,
+        ip=_ip(request),
+    )
+    db.commit()
+
+    return FinalizeResult(
+        sale=SaleOut.model_validate(sale),
+        receipt_lines=receipt_lines,
+        printed=printed,
+        print_error=print_error,
+    )
 
 
 @router.delete(

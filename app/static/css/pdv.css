@@ -771,6 +771,96 @@ html, body {
   color: #c0c8d0;
 }
 
+/* ---------- modal pagamento ---------- */
+
+.modal-pagamento .modal-content {
+  max-width: 520px;
+}
+
+.pay-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  gap: 10px;
+}
+
+.pay-row strong { color: #ffcf33; font-size: 16px; }
+
+.pay-row.pay-total-row strong { font-size: 20px; }
+
+.pay-discount {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pay-discount label {
+  flex: 0 0 100%;
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+.pay-discount input {
+  flex: 1;
+  min-width: 120px;
+  max-width: 120px;
+}
+
+.pay-discount input + input {
+  flex: 1 1 100%;
+  max-width: 100%;
+}
+
+.pay-change strong {
+  color: #4caf50;
+  font-size: 20px;
+}
+
+.pay-row.pay-change.falta strong {
+  color: #ff6b6b;
+}
+
+.pay-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.pay-item {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.pay-item select,
+.pay-item input {
+  width: 100%;
+  padding: 7px 9px;
+  background: #0f1a2e;
+  border: 1px solid #2a4273;
+  color: #e8ecf1;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.pay-item button {
+  background: transparent;
+  border: 1px solid #a71e1e;
+  color: #ff6b6b;
+  padding: 6px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pay-item button:hover {
+  background: #a71e1e;
+  color: #fff;
+}
+
 /* ---------- responsivo (1280 e menores) ---------- */
 
 @media (max-width: 1280px) {

@@ -76,10 +76,9 @@
     <span class="shortcut-label">Remover</span>
     <span class="shortcut-keys"><kbd>F4</kbd> ou <kbd>Ctrl</kbd>+<kbd>D</kbd></span>
   </button>
-  <button type="button" class="shortcut-btn disabled" data-action="pagar"
-          title="Disponivel na Fase 4">
+  <button type="button" class="shortcut-btn" data-action="pagar">
     <span class="shortcut-label">Pagar</span>
-    <span class="shortcut-keys"><kbd>F6</kbd> (Fase 4)</span>
+    <span class="shortcut-keys"><kbd>F6</kbd></span>
   </button>
   <button type="button" class="shortcut-btn shortcut-danger" data-action="cancelar">
     <span class="shortcut-label">Cancelar venda</span>
@@ -89,10 +88,9 @@
     <span class="shortcut-label">Consultar preco</span>
     <span class="shortcut-keys"><kbd>F9</kbd> ou <kbd>Ctrl</kbd>+<kbd>I</kbd></span>
   </button>
-  <button type="button" class="shortcut-btn disabled" data-action="reimprimir"
-          title="Disponivel na Fase 5">
+  <button type="button" class="shortcut-btn" data-action="reimprimir">
     <span class="shortcut-label">Reimprimir</span>
-    <span class="shortcut-keys"><kbd>F10</kbd> (Fase 5)</span>
+    <span class="shortcut-keys"><kbd>F10</kbd></span>
   </button>
 </footer>
 
@@ -139,6 +137,54 @@
     <div class="modal-body">
       <input type="search" id="preco-input" placeholder="bipe o produto..." autofocus>
       <div id="preco-resultado" class="preco-resultado"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de pagamento (F6) -->
+<div id="modal-pagamento" class="modal" hidden aria-modal="true" role="dialog">
+  <div class="modal-content modal-pagamento">
+    <header class="modal-header">
+      <h2>Pagamento</h2>
+      <button type="button" class="btn-close" data-close="modal-pagamento">x</button>
+    </header>
+    <div class="modal-body">
+      <div class="pay-row">
+        <span>Subtotal</span>
+        <strong id="pay-subtotal">R$ 0,00</strong>
+      </div>
+      <div class="pay-row pay-discount">
+        <label for="pay-discount-input">Desconto (R$)</label>
+        <input type="text" id="pay-discount-input" inputmode="decimal" placeholder="0,00">
+        <input type="text" id="pay-discount-reason" placeholder="motivo (obrigatorio se > 0)" maxlength="200">
+      </div>
+      <div class="pay-row pay-total-row">
+        <span>TOTAL</span>
+        <strong id="pay-total">R$ 0,00</strong>
+      </div>
+
+      <hr>
+
+      <div id="pay-list" class="pay-list"></div>
+      <button type="button" id="pay-add" class="btn btn-sm">+ Adicionar pagamento</button>
+
+      <hr>
+
+      <div class="pay-row">
+        <span>Pago</span>
+        <strong id="pay-paid">R$ 0,00</strong>
+      </div>
+      <div class="pay-row pay-change">
+        <span id="pay-change-label">Troco</span>
+        <strong id="pay-change">R$ 0,00</strong>
+      </div>
+      <div id="pay-erro" class="erro-form" hidden></div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close="modal-pagamento">Cancelar</button>
+        <button type="button" id="pay-no-print" class="btn">Finalizar sem imprimir</button>
+        <button type="button" id="pay-print" class="btn btn-primary">Finalizar e imprimir</button>
+      </div>
     </div>
   </div>
 </div>

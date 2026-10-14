@@ -224,6 +224,13 @@ class SaleItemOut(StrictBase):
     line_total_cents: int
 
 
+class PaymentOut(StrictBase):
+    id: int
+    method: str
+    amount_cents: int
+    change_cents: int
+
+
 class SaleOut(StrictBase):
     id: int
     number: int
@@ -235,4 +242,40 @@ class SaleOut(StrictBase):
     created_at: datetime
     finalized_at: Optional[datetime]
     cancel_reason: Optional[str]
+    discount_reason: Optional[str] = None
     items: list[SaleItemOut] = Field(default_factory=list)
+    payments: list[PaymentOut] = Field(default_factory=list)
+
+
+# ---------- Finalize / Reverse / Reprint ----------
+
+
+MethodStr = Annotated[
+    str,
+    StringConstraints(min_length=1, max_length=20, strip_whitespace=True, pattern=r"^[A-Za-z0-9_-]+$"),
+]
+
+
+class PaymentInput(StrictBase):
+    method: MethodStr
+    amount_cents: int = Field(..., ge=0, le=100_000_000)
+
+
+class FinalizeRequest(StrictBase):
+    payments: list[PaymentInput] = Field(..., min_length=1, max_length=10)
+    discount_cents: int = Field(default=0, ge=0, le=100_000_000)
+    discount_reason: Optional[
+        Annotated[str, StringConstraints(min_length=1, max_length=200)]
+    ] = None
+    print_receipt: bool = Field(default=True)
+
+
+class ReverseRequest(StrictBase):
+    reason: Annotated[str, StringConstraints(min_length=1, max_length=200)]
+
+
+class FinalizeResult(StrictBase):
+    sale: SaleOut
+    receipt_lines: list[str] = Field(default_factory=list)
+    printed: bool
+    print_error: Optional[str] = None

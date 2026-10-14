@@ -47,6 +47,7 @@ ALLOWED_KEYS: set[str] = {
     "printer_auto_cut",
     "allow_negative_stock",
     "default_print_after_sale",
+    "payment_methods",
 }
 
 

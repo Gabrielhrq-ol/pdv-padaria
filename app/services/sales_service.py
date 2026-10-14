@@ -19,8 +19,12 @@ from typing import Optional
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.models import Product, Sale, SaleItem, User
+import json
+from datetime import datetime
+
+from app.models import Payment, Product, Sale, SaleItem, Setting, StockMovement, User
 from app.money import line_total_cents
+from app.security import utc_now
 
 
 class SalesError(Exception):
@@ -213,5 +217,218 @@ def cancel_sale(
     sale.status = "cancelled"
     sale.cancel_reason = reason[:200]
     sale.cancelled_by = user.id
+    sale.cancelled_at = utc_now()
     db.flush()
     return sale
+
+
+# ---------- Finalizacao e estorno (Fase 4) ----------
+
+
+DEFAULT_PAYMENT_METHODS = ["dinheiro", "debito", "credito", "pix", "outros"]
+
+
+def _load_payment_methods(db: Session) -> set[str]:
+    s = db.get(Setting, "payment_methods")
+    raw = s.value if s is not None else None
+    if raw:
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, list) and all(isinstance(x, str) for x in parsed):
+                return {x.strip().lower() for x in parsed if x.strip()}
+        except (ValueError, TypeError):
+            pass
+    return set(DEFAULT_PAYMENT_METHODS)
+
+
+@dataclass
+class ChangeResult:
+    total_a_pagar_cents: int
+    total_pago_cents: int
+    change_cents: int
+    change_payment_index: int  # posicao do payment que leva o troco (-1 se nao ha troco)
+
+
+def calculate_change(
+    payments: list[tuple[str, int]],  # [(method, amount_cents), ...]
+    total_a_pagar: int,
+) -> ChangeResult:
+    """
+    Funcao PURA. Calcula troco. Nao toca em banco.
+
+    Regras (CLAUDE.md):
+    - soma dos pagamentos >= total_a_pagar
+    - cartao / pix / nao-dinheiro NAO podem ter excesso
+    - troco so sai de pagamento tipo 'dinheiro'
+    """
+    if type(total_a_pagar) is not int or total_a_pagar < 0:
+        raise SalesError("Total invalido.", 422)
+    if not payments:
+        raise SalesError("Pelo menos um pagamento e obrigatorio.", 422)
+
+    total_pago = 0
+    total_nao_dinheiro = 0
+    last_dinheiro_idx = -1
+
+    for idx, (method, amount) in enumerate(payments):
+        if type(amount) is not int or amount < 0:
+            raise SalesError("Valor de pagamento invalido.", 422)
+        total_pago += amount
+        if method.lower() == "dinheiro":
+            last_dinheiro_idx = idx
+        else:
+            total_nao_dinheiro += amount
+
+    if total_nao_dinheiro > total_a_pagar:
+        raise SalesError(
+            "Pagamento em cartao/PIX nao pode exceder o total.", 400
+        )
+
+    if total_pago < total_a_pagar:
+        falta = total_a_pagar - total_pago
+        raise SalesError(f"Valor insuficiente. Falta pagar.", 400)
+
+    excesso = total_pago - total_a_pagar
+    if excesso > 0 and last_dinheiro_idx == -1:
+        # Impossivel na pratica (nao dinheiro nao pode exceder) mas defende.
+        raise SalesError("Troco so pode sair de pagamento em dinheiro.", 400)
+
+    return ChangeResult(
+        total_a_pagar_cents=total_a_pagar,
+        total_pago_cents=total_pago,
+        change_cents=excesso,
+        change_payment_index=last_dinheiro_idx if excesso > 0 else -1,
+    )
+
+
+def finalize_sale(
+    db: Session,
+    sale: Sale,
+    user: User,
+    payments_in: list[tuple[str, int]],  # [(method, amount_cents), ...]
+    *,
+    discount_cents: int = 0,
+    discount_reason: Optional[str] = None,
+) -> Sale:
+    """
+    Finalizacao atomica (CLAUDE.md regra 3): venda, itens ja existentes,
+    pagamentos, baixa de estoque + stock_movements. Chamador deve dar
+    commit no final (um unico commit).
+
+    allow_negative_stock = true (decisao 9): NUNCA bloqueia por estoque.
+    """
+    _assert_open(sale)
+    if not sale.items:
+        raise SalesError("Venda sem itens.", 400)
+
+    if type(discount_cents) is not int or discount_cents < 0:
+        raise SalesError("Desconto invalido.", 422)
+    if discount_cents > sale.subtotal_cents:
+        raise SalesError("Desconto maior que o subtotal.", 422)
+    if discount_cents > 0:
+        if not discount_reason or not discount_reason.strip():
+            raise SalesError("Motivo do desconto e obrigatorio.", 422)
+
+    # Validacao de metodos contra o setting
+    allowed = _load_payment_methods(db)
+    for method, _ in payments_in:
+        if method.lower() not in allowed:
+            raise SalesError(
+                f"Forma de pagamento nao permitida: {method}", 400
+            )
+
+    total_a_pagar = sale.subtotal_cents - discount_cents
+    change_result = calculate_change(payments_in, total_a_pagar)
+
+    # 1) Pagamentos
+    pay_rows: list[Payment] = []
+    for idx, (method, amount) in enumerate(payments_in):
+        change = change_result.change_cents if idx == change_result.change_payment_index else 0
+        p = Payment(
+            sale_id=sale.id,
+            method=method.lower(),
+            amount_cents=amount,
+            change_cents=change,
+        )
+        db.add(p)
+        pay_rows.append(p)
+
+    # 2) Baixa de estoque + movements (CLAUDE.md regra 3 - mesma transacao)
+    for item in sale.items:
+        product = db.get(Product, item.product_id)
+        if product is None:
+            raise SalesError("Produto do item nao encontrado.", 500)
+        product.stock_milli = product.stock_milli - item.qty_milli
+        db.add(
+            StockMovement(
+                product_id=product.id,
+                type="venda",
+                qty_milli=-item.qty_milli,
+                sale_id=sale.id,
+                user_id=user.id,
+            )
+        )
+
+    # 3) Atualiza venda
+    sale.discount_cents = discount_cents
+    sale.discount_reason = (
+        discount_reason.strip()[:200] if discount_cents > 0 and discount_reason else None
+    )
+    sale.total_cents = total_a_pagar
+    sale.status = "completed"
+    sale.finalized_at = utc_now()
+
+    db.flush()
+    return sale
+
+
+def reverse_sale(
+    db: Session,
+    sale: Sale,
+    user: User,
+    reason: str,
+) -> Sale:
+    """
+    Cancela uma venda ja FINALIZADA. Estorna estoque + grava movements.
+    Decisao 3 do cliente: qualquer operador pode (com motivo + audit).
+    """
+    if sale.status != "completed":
+        raise SalesError(
+            f"So e possivel reverter venda completed (atual: {sale.status}).", 409
+        )
+    reason = (reason or "").strip()
+    if not reason:
+        raise SalesError("Motivo obrigatorio.", 422)
+
+    for item in sale.items:
+        product = db.get(Product, item.product_id)
+        if product is None:
+            continue  # inconsistencia; nao impede o estorno
+        product.stock_milli = product.stock_milli + item.qty_milli
+        db.add(
+            StockMovement(
+                product_id=product.id,
+                type="estorno",
+                qty_milli=item.qty_milli,
+                sale_id=sale.id,
+                user_id=user.id,
+                reason=reason[:200],
+            )
+        )
+
+    sale.status = "cancelled"
+    sale.cancel_reason = reason[:200]
+    sale.cancelled_by = user.id
+    sale.cancelled_at = utc_now()
+    db.flush()
+    return sale
+
+
+def get_last_completed(db: Session, user_id: int) -> Optional[Sale]:
+    """Ultima venda COMPLETED do operador atual (para reimpressao F10)."""
+    return db.execute(
+        select(Sale)
+        .where(Sale.user_id == user_id, Sale.status == "completed")
+        .order_by(Sale.finalized_at.desc())
+        .limit(1)
+    ).scalar_one_or_none()

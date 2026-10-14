@@ -417,6 +417,182 @@
     }
   }
 
+  // ---------- modal pagamento (F6) ----------
+
+  let payState = { payments: [], discount_cents: 0, discount_reason: '' };
+
+  function parseCents(text) {
+    const t = (text || '').toString().trim();
+    if (!t) return 0;
+    if (t.startsWith('-')) throw new Error('Valor negativo.');
+    const cleaned = t.replace(/^R\$\s*/i, '');
+    const lastComma = cleaned.lastIndexOf(',');
+    const lastDot = cleaned.lastIndexOf('.');
+    let integer, decimal;
+    if (lastComma === -1 && lastDot === -1) {
+      if (!/^\d+$/.test(cleaned)) throw new Error('Valor invalido.');
+      return parseInt(cleaned, 10) * 100;
+    }
+    const decimalSep = lastComma > lastDot ? ',' : '.';
+    const thousandSep = decimalSep === ',' ? '.' : ',';
+    const idx = cleaned.lastIndexOf(decimalSep);
+    integer = cleaned.slice(0, idx).split(thousandSep).join('');
+    decimal = cleaned.slice(idx + 1);
+    if (!/^\d+$/.test(integer) || !/^\d*$/.test(decimal)) throw new Error('Valor invalido.');
+    if (decimal.length > 2) throw new Error('Max 2 casas decimais.');
+    decimal = (decimal + '00').slice(0, 2);
+    return parseInt(integer, 10) * 100 + parseInt(decimal, 10);
+  }
+
+  function renderPaymentList() {
+    const list = document.getElementById('pay-list');
+    clearNode(list);
+    payState.payments.forEach((p, idx) => {
+      const row = document.createElement('div');
+      row.className = 'pay-item';
+      const sel = document.createElement('select');
+      ['dinheiro', 'debito', 'credito', 'pix', 'outros'].forEach(m => {
+        const op = document.createElement('option');
+        op.value = m; op.textContent = m.charAt(0).toUpperCase() + m.slice(1);
+        if (m === p.method) op.selected = true;
+        sel.appendChild(op);
+      });
+      sel.addEventListener('change', () => { p.method = sel.value; refreshPaymentCalc(); });
+      row.appendChild(sel);
+
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.inputMode = 'decimal';
+      inp.placeholder = '0,00';
+      inp.value = p.amountStr;
+      inp.addEventListener('input', () => { p.amountStr = inp.value; refreshPaymentCalc(); });
+      row.appendChild(inp);
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = 'Remover';
+      btn.addEventListener('click', () => {
+        payState.payments.splice(idx, 1);
+        renderPaymentList();
+        refreshPaymentCalc();
+      });
+      row.appendChild(btn);
+      list.appendChild(row);
+    });
+  }
+
+  function refreshPaymentCalc() {
+    const subtotal = currentSale ? currentSale.subtotal_cents : 0;
+    document.getElementById('pay-subtotal').textContent = formatCents(subtotal);
+
+    let discount = 0;
+    try {
+      discount = parseCents(document.getElementById('pay-discount-input').value);
+    } catch (_) { discount = 0; }
+    if (discount > subtotal) discount = subtotal;
+    payState.discount_cents = discount;
+    payState.discount_reason = document.getElementById('pay-discount-reason').value.trim();
+
+    const total = Math.max(0, subtotal - discount);
+    document.getElementById('pay-total').textContent = formatCents(total);
+
+    let paid = 0;
+    payState.payments.forEach(p => {
+      try { p.amount_cents = parseCents(p.amountStr); }
+      catch (_) { p.amount_cents = 0; }
+      paid += p.amount_cents;
+    });
+    document.getElementById('pay-paid').textContent = formatCents(paid);
+
+    const diff = paid - total;
+    const label = document.getElementById('pay-change-label');
+    const value = document.getElementById('pay-change');
+    const row = value.parentElement;
+    if (diff >= 0) {
+      label.textContent = 'Troco';
+      value.textContent = formatCents(diff);
+      row.classList.remove('falta');
+    } else {
+      label.textContent = 'Falta';
+      value.textContent = formatCents(-diff);
+      row.classList.add('falta');
+    }
+  }
+
+  function openPagamento() {
+    if (!currentSale || !currentSale.items || currentSale.items.length === 0) {
+      showToast('Nenhum item na venda'); return;
+    }
+    payState = {
+      payments: [{ method: 'dinheiro', amountStr: formatCents(currentSale.subtotal_cents).replace(/^R\$\s*/, '') }],
+      discount_cents: 0,
+      discount_reason: '',
+    };
+    document.getElementById('pay-discount-input').value = '';
+    document.getElementById('pay-discount-reason').value = '';
+    document.getElementById('pay-erro').hidden = true;
+    renderPaymentList();
+    refreshPaymentCalc();
+    openModal('modal-pagamento');
+  }
+
+  async function doFinalize(print_receipt) {
+    const erro = document.getElementById('pay-erro');
+    erro.hidden = true;
+    try {
+      refreshPaymentCalc();
+      const payments = payState.payments.map(p => ({
+        method: p.method, amount_cents: p.amount_cents || 0,
+      }));
+      const body = {
+        payments: payments,
+        discount_cents: payState.discount_cents,
+        print_receipt: print_receipt,
+      };
+      if (payState.discount_cents > 0) {
+        if (!payState.discount_reason) {
+          erro.hidden = false;
+          erro.textContent = 'Motivo do desconto e obrigatorio.';
+          return;
+        }
+        body.discount_reason = payState.discount_reason;
+      }
+      const result = await apiFetch(
+        API_SALES + '/' + currentSale.id + '/finalize',
+        { method: 'POST', body: JSON.stringify(body) }
+      );
+      currentSale = null;
+      selectedIndex = -1;
+      renderSale();
+      closeAllModals();
+      if (result.printed) {
+        setFeedback('Venda finalizada e impressa', 'ok');
+      } else if (print_receipt && result.print_error) {
+        setFeedback('Venda OK; falha na impressao: ' + result.print_error, 'erro');
+      } else {
+        setFeedback('Venda finalizada', 'ok');
+      }
+    } catch (err) {
+      erro.hidden = false;
+      erro.textContent = err.message;
+    }
+  }
+
+  async function reprintLast() {
+    try {
+      const last = await apiFetch(API_SALES + '/last-completed');
+      if (!last) { showToast('Nenhuma venda recente para reimprimir'); return; }
+      const result = await apiFetch(
+        API_SALES + '/' + last.id + '/reprint',
+        { method: 'POST' }
+      );
+      if (result.printed) setFeedback('2a VIA enviada', 'ok');
+      else setFeedback('Falha na reimpressao: ' + (result.print_error || ''), 'erro');
+    } catch (err) {
+      showToast(err.message, 'erro');
+    }
+  }
+
   // ---------- modais ----------
 
   function openModal(id) {
@@ -424,8 +600,9 @@
   }
 
   function closeAllModals() {
-    ['modal-busca', 'modal-qty', 'modal-preco', 'modal-cancel'].forEach(id => {
-      document.getElementById(id).hidden = true;
+    ['modal-busca', 'modal-qty', 'modal-preco', 'modal-cancel', 'modal-pagamento'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.hidden = true;
     });
     document.getElementById('pdv-code').focus();
   }
@@ -481,18 +658,10 @@
     if (ev.key === 'F2') { ev.preventDefault(); openBusca(); return; }
     if (ev.key === 'F3') { ev.preventDefault(); changeQtySelected(); return; }
     if (ev.key === 'F4') { ev.preventDefault(); removeSelected(); return; }
-    if (ev.key === 'F6') {
-      ev.preventDefault();
-      showToast('Pagamento disponivel na Fase 4');
-      return;
-    }
+    if (ev.key === 'F6') { ev.preventDefault(); openPagamento(); return; }
     if (ev.key === 'F8') { ev.preventDefault(); openCancelModal(); return; }
     if (ev.key === 'F9') { ev.preventDefault(); openPreco(); return; }
-    if (ev.key === 'F10') {
-      ev.preventDefault();
-      showToast('Reimprimir disponivel na Fase 5');
-      return;
-    }
+    if (ev.key === 'F10') { ev.preventDefault(); reprintLast(); return; }
 
     // Ctrl+letra (alternativa para notebook, onde F2-F9 sao sobrepostos
     // por brilho/volume/midia). Previne o default do browser.
@@ -527,18 +696,15 @@
 
   function handleShortcutClick(ev) {
     const btn = ev.currentTarget;
-    if (btn.classList.contains('disabled')) {
-      const action = btn.dataset.action;
-      if (action === 'pagar') showToast('Pagamento disponivel na Fase 4');
-      if (action === 'reimprimir') showToast('Reimprimir disponivel na Fase 5');
-      return;
-    }
+    if (btn.classList.contains('disabled')) return;
     const action = btn.dataset.action;
     if (action === 'buscar') return openBusca();
     if (action === 'qty') return changeQtySelected();
     if (action === 'remover') return removeSelected();
     if (action === 'cancelar') return openCancelModal();
     if (action === 'preco') return openPreco();
+    if (action === 'pagar') return openPagamento();
+    if (action === 'reimprimir') return reprintLast();
   }
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -559,6 +725,19 @@
     document.getElementById('preco-input').addEventListener('keydown', ev => {
       if (ev.key === 'Enter') { ev.preventDefault(); doConsultaPreco(ev.currentTarget.value.trim()); }
     });
+
+    // Modal pagamento
+    document.getElementById('pay-discount-input').addEventListener('input', refreshPaymentCalc);
+    document.getElementById('pay-discount-reason').addEventListener('input', () => {
+      payState.discount_reason = document.getElementById('pay-discount-reason').value.trim();
+    });
+    document.getElementById('pay-add').addEventListener('click', () => {
+      payState.payments.push({ method: 'dinheiro', amountStr: '0,00' });
+      renderPaymentList();
+      refreshPaymentCalc();
+    });
+    document.getElementById('pay-print').addEventListener('click', () => doFinalize(true));
+    document.getElementById('pay-no-print').addEventListener('click', () => doFinalize(false));
 
     // devolve foco ao campo ao clicar fora
     document.addEventListener('click', (ev) => {

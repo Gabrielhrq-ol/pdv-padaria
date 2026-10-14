@@ -41,6 +41,7 @@ DEMO_SETTINGS: dict[str, str] = {
     "printer_auto_cut": "false",
     "allow_negative_stock": "true",
     "default_print_after_sale": "true",
+    "payment_methods": '["dinheiro","debito","credito","pix","outros"]',
 }
 
 

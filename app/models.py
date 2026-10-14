@@ -126,7 +126,8 @@ class Product(Base):
             "cost_cents IS NULL OR cost_cents >= 0",
             name="ck_products_cost_non_negative",
         ),
-        CheckConstraint("stock_milli >= 0", name="ck_products_stock_non_negative"),
+        # stock_milli pode ser negativo: decisao 9 do cliente diz pra NUNCA
+        # bloquear venda por estoque. Padaria produz propria mercadoria.
         CheckConstraint(
             "min_stock_milli >= 0", name="ck_products_min_stock_non_negative"
         ),
@@ -165,11 +166,20 @@ class Sale(Base):
     cancelled_by: Mapped[Optional[int]] = mapped_column(
         ForeignKey("users.id"), nullable=True
     )
+    cancelled_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    discount_reason: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
 
     items: Mapped[list["SaleItem"]] = relationship(
         back_populates="sale",
         cascade="all, delete-orphan",
         order_by="SaleItem.id",
+    )
+    payments: Mapped[list["Payment"]] = relationship(
+        back_populates="sale",
+        cascade="all, delete-orphan",
+        order_by="Payment.id",
     )
 
     __table_args__ = (
@@ -222,6 +232,70 @@ class SaleItem(Base):
         ),
         CheckConstraint("unit IN ('UN', 'KG', 'L')", name="ck_sale_items_unit"),
         Index("ix_sale_items_sale_id", "sale_id"),
+    )
+
+
+class Payment(Base):
+    """
+    Pagamento de uma venda. `method` validado contra setting
+    `payment_methods` no servico (nao no banco).
+    `change_cents` so eh > 0 em pagamento tipo dinheiro.
+    """
+
+    __tablename__ = "payments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sale_id: Mapped[int] = mapped_column(
+        ForeignKey("sales.id", ondelete="CASCADE"), nullable=False
+    )
+    method: Mapped[str] = mapped_column(String(20), nullable=False)
+    amount_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    change_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+
+    sale: Mapped["Sale"] = relationship(back_populates="payments")
+
+    __table_args__ = (
+        CheckConstraint("amount_cents >= 0", name="ck_payments_amount_non_negative"),
+        CheckConstraint("change_cents >= 0", name="ck_payments_change_non_negative"),
+        CheckConstraint("length(method) > 0", name="ck_payments_method_not_empty"),
+        Index("ix_payments_sale_id", "sale_id"),
+    )
+
+
+class StockMovement(Base):
+    """
+    Livro-razao do estoque. qty_milli e SIGNED:
+    - venda, perda: negativo
+    - entrada, ajuste positivo, estorno: positivo
+    - ajuste: qualquer sinal (motivo explica)
+
+    Invariante: product.stock_milli = sum(movements.qty_milli) + saldo inicial.
+    """
+
+    __tablename__ = "stock_movements"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
+    type: Mapped[str] = mapped_column(String(10), nullable=False)
+    qty_milli: Mapped[int] = mapped_column(Integer, nullable=False)
+    reason: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    sale_id: Mapped[Optional[int]] = mapped_column(ForeignKey("sales.id"), nullable=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "type IN ('entrada', 'venda', 'ajuste', 'perda', 'estorno')",
+            name="ck_stock_movements_type",
+        ),
+        CheckConstraint("qty_milli != 0", name="ck_stock_movements_qty_nonzero"),
+        Index("ix_stock_movements_product_created", "product_id", "created_at"),
+        Index("ix_stock_movements_sale_id", "sale_id"),
     )
 
 
