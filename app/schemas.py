@@ -307,3 +307,87 @@ class PrinterTestResult(StrictBase):
     printed: bool
     print_error: Optional[str] = None
     lines: list[str] = Field(default_factory=list)
+
+
+# ---------- Stock (Fase 6) ----------
+
+StockMovementType = Literal["entrada", "venda", "ajuste", "perda", "estorno"]
+
+# Reason obrigatorio em perda/ajuste: min 3 chars util, max 200.
+ReasonRequired = Annotated[
+    str,
+    StringConstraints(min_length=3, max_length=200, strip_whitespace=True),
+]
+# Reason opcional em entrada: ate 200 chars; vazio vira None.
+ReasonOptional = Annotated[
+    str,
+    StringConstraints(max_length=200, strip_whitespace=True),
+]
+
+
+class StockEntryIn(StrictBase):
+    """
+    Entrada de mercadoria (chegada de fornecedor, producao propria etc).
+    Motivo e OPCIONAL (decisao do dono 2026-10-14).
+    """
+
+    product_id: int = Field(..., ge=1)
+    qty_milli: int = Field(..., ge=1, le=MAX_MILLI)
+    reason: Optional[ReasonOptional] = None
+
+    @field_validator("reason")
+    @classmethod
+    def _empty_reason_as_none(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        v = v.strip()
+        return v or None
+
+
+class StockLossIn(StrictBase):
+    """
+    Perda de mercadoria (quebra, vencimento, furto). Motivo OBRIGATORIO
+    (CLAUDE.md decisao 9 do cliente + regra 11 de auditoria).
+    """
+
+    product_id: int = Field(..., ge=1)
+    qty_milli: int = Field(..., ge=1, le=MAX_MILLI)
+    reason: ReasonRequired
+
+
+class StockAdjustmentIn(StrictBase):
+    """
+    Ajuste de inventario: define um NOVO saldo absoluto e grava o delta
+    como stock_movement tipo 'ajuste'. Produto deve estar ATIVO (decisao
+    do dono 2026-10-14). Motivo OBRIGATORIO.
+    """
+
+    product_id: int = Field(..., ge=1)
+    new_stock_milli: int = Field(..., ge=0, le=MAX_MILLI)
+    reason: ReasonRequired
+
+
+class StockMovementOut(StrictBase):
+    """Linha do historico de movimentacoes."""
+
+    id: int
+    product_id: int
+    product_name: str
+    product_unit: Unit
+    type: StockMovementType
+    qty_milli: int  # SIGNED
+    reason: Optional[str]
+    sale_id: Optional[int]
+    user_id: int
+    user_name: Optional[str]
+    created_at: datetime
+
+
+class LowStockOut(StrictBase):
+    """Produto com estoque <= minimo configurado."""
+
+    product_id: int
+    product_name: str
+    unit: Unit
+    stock_milli: int
+    min_stock_milli: int

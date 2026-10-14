@@ -10,22 +10,30 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.dependencies import require_admin, require_csrf
+from app.dependencies import require_admin, require_authenticated, require_csrf
 from app.models import AuditLog, Setting, User
 from app.schemas import (
+    LowStockOut,
     PrinterSettingsOut,
     PrinterSettingsUpdate,
     PrinterTestResult,
+    StockAdjustmentIn,
+    StockEntryIn,
+    StockLossIn,
+    StockMovementOut,
+    StockMovementType,
 )
+from app.services import stock_service
 from app.services.printer import (
     PrintJob,
     PrinterUnavailableError,
     get_printer,
 )
+from app.services.stock_service import StockError
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -216,3 +224,151 @@ def printer_test(
         print_error=print_error,
         lines=lines,
     )
+
+
+# ---------- Stock (Fase 6) ----------
+
+
+def _movement_to_out(row: stock_service.MovementRow) -> StockMovementOut:
+    return StockMovementOut(
+        id=row.id,
+        product_id=row.product_id,
+        product_name=row.product_name,
+        product_unit=row.product_unit,  # type: ignore[arg-type]
+        type=row.type,  # type: ignore[arg-type]
+        qty_milli=row.qty_milli,
+        reason=row.reason,
+        sale_id=row.sale_id,
+        user_id=row.user_id,
+        user_name=row.user_name,
+        created_at=row.created_at,
+    )
+
+
+@router.post(
+    "/stock/entry",
+    response_model=StockMovementOut,
+    dependencies=[Depends(require_csrf)],
+)
+def stock_entry(
+    payload: StockEntryIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_admin),
+) -> StockMovementOut:
+    try:
+        stock_service.register_entry(
+            db,
+            user=user,
+            product_id=payload.product_id,
+            qty_milli=payload.qty_milli,
+            reason=payload.reason,
+        )
+    except StockError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message)
+
+    rows = stock_service.list_movements(
+        db, product_id=payload.product_id, type_="entrada", limit=1
+    )
+    return _movement_to_out(rows[0])
+
+
+@router.post(
+    "/stock/loss",
+    response_model=StockMovementOut,
+    dependencies=[Depends(require_csrf)],
+)
+def stock_loss(
+    payload: StockLossIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_admin),
+) -> StockMovementOut:
+    try:
+        stock_service.register_loss(
+            db,
+            user=user,
+            product_id=payload.product_id,
+            qty_milli=payload.qty_milli,
+            reason=payload.reason,
+        )
+    except StockError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message)
+
+    rows = stock_service.list_movements(
+        db, product_id=payload.product_id, type_="perda", limit=1
+    )
+    return _movement_to_out(rows[0])
+
+
+@router.post(
+    "/stock/adjustment",
+    response_model=StockMovementOut,
+    dependencies=[Depends(require_csrf)],
+)
+def stock_adjustment(
+    payload: StockAdjustmentIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_admin),
+) -> StockMovementOut:
+    try:
+        stock_service.register_adjustment(
+            db,
+            user=user,
+            product_id=payload.product_id,
+            new_stock_milli=payload.new_stock_milli,
+            reason=payload.reason,
+        )
+    except StockError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message)
+
+    rows = stock_service.list_movements(
+        db, product_id=payload.product_id, type_="ajuste", limit=1
+    )
+    return _movement_to_out(rows[0])
+
+
+@router.get("/stock/movements", response_model=list[StockMovementOut])
+def stock_movements(
+    product_id: Optional[int] = Query(default=None, ge=1),
+    type: Optional[StockMovementType] = Query(default=None),
+    date_from: Optional[datetime] = Query(default=None),
+    date_to: Optional[datetime] = Query(default=None),
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_authenticated),
+) -> list[StockMovementOut]:
+    """
+    Historico de movimentacoes. Admin e caixa podem consultar.
+    """
+    rows = stock_service.list_movements(
+        db,
+        product_id=product_id,
+        type_=type,
+        date_from=date_from,
+        date_to=date_to,
+        limit=limit,
+        offset=offset,
+    )
+    return [_movement_to_out(r) for r in rows]
+
+
+@router.get("/stock/low", response_model=list[LowStockOut])
+def stock_low(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_authenticated),
+) -> list[LowStockOut]:
+    """
+    Produtos ativos abaixo do minimo configurado. Admin e caixa podem ver
+    (caixa precisa saber o que acabou).
+    """
+    rows = stock_service.list_low_stock(db)
+    return [
+        LowStockOut(
+            product_id=r.product_id,
+            product_name=r.product_name,
+            unit=r.unit,  # type: ignore[arg-type]
+            stock_milli=r.stock_milli,
+            min_stock_milli=r.min_stock_milli,
+        )
+        for r in rows
+    ]

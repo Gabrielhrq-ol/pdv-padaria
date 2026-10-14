@@ -227,6 +227,25 @@ async def admin_printer_page(
     )
 
 
+@app.get("/admin/stock", include_in_schema=False, response_model=None)
+async def admin_stock_page(
+    request: Request,
+    user: User | None = Depends(get_optional_user),
+) -> HTMLResponse | RedirectResponse:
+    if user is None:
+        return RedirectResponse(url="/login", status_code=302)
+    if user.role != "admin":
+        return RedirectResponse(url="/products", status_code=302)
+    return templates.TemplateResponse(
+        request=request,
+        name="admin_stock.html",
+        context={
+            "env": settings.ENVIRONMENT,
+            "user": {"name": user.name, "username": user.username, "role": user.role},
+        },
+    )
+
+
 @app.get("/health", include_in_schema=False)
 async def health() -> dict[str, str]:
     return {"status": "ok"}

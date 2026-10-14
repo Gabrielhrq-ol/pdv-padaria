@@ -12,8 +12,12 @@
     </span>
     <a href="/pdv" class="btn">Abrir PDV</a>
     {% if user.role == 'admin' %}
+    <a href="/admin/stock" class="btn">Estoque</a>
     <a href="/admin/printer" class="btn">Config</a>
     {% endif %}
+    <button type="button" id="btn-low-stock" class="btn btn-warn" hidden>
+      <span id="low-stock-count">0</span> em alerta
+    </button>
     <button type="button" id="btn-novo" class="btn btn-primary">+ Novo produto</button>
     <button type="button" id="btn-sair" class="btn">Sair</button>
   </div>
@@ -127,5 +131,31 @@
   </div>
 </div>
 
+<!-- Modal de alerta de estoque baixo -->
+<div id="modal-low-stock" class="modal" hidden aria-modal="true" role="dialog">
+  <div class="modal-content">
+    <header class="modal-header">
+      <h2>Produtos em alerta de estoque</h2>
+      <button type="button" class="btn-close" id="btn-fechar-low-stock" aria-label="Fechar">x</button>
+    </header>
+    <div class="modal-body">
+      <p class="hint">Produtos ativos cujo saldo esta abaixo (ou igual a) o minimo configurado.</p>
+      <table class="table-produtos">
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Un.</th>
+            <th class="num">Saldo</th>
+            <th class="num">Minimo</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-low-stock"></tbody>
+      </table>
+      <p id="low-stock-vazio" class="empty-state" hidden>Nenhum alerta no momento.</p>
+    </div>
+  </div>
+</div>
+
 <script src="/static/js/products.js"></script>
+<script src="/static/js/stock_alert.js"></script>
 {% endblock %}

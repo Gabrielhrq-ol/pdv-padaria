@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Estoque - PDV Padaria{% endblock %}
+
+{% block body %}
+<header class="page-header">
+  <h1>Gestao de estoque</h1>
+  <div class="header-actions">
+    <span class="env-badge">{{ env }}</span>
+    <span class="user-info">
+      {{ user.name }} <small>({{ user.role }})</small>
+    </span>
+    <a href="/products" class="btn btn-sm">Produtos</a>
+    <a href="/pdv" class="btn btn-sm">PDV</a>
+    <a href="/admin/printer" class="btn btn-sm">Impressora</a>
+    <button type="button" id="btn-sair" class="btn btn-sm">Sair</button>
+  </div>
+</header>
+
+<main class="container admin-container">
+  <nav class="tabs" role="tablist">
+    <button type="button" class="tab active" data-tab="entrada" role="tab">Entrada</button>
+    <button type="button" class="tab" data-tab="perda" role="tab">Perda</button>
+    <button type="button" class="tab" data-tab="ajuste" role="tab">Ajuste</button>
+    <button type="button" class="tab" data-tab="historico" role="tab">Historico</button>
+  </nav>
+
+  <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+
+  <!-- ENTRADA -->
+  <section class="card tab-panel" id="panel-entrada">
+    <h2>Entrada de mercadoria</h2>
+    <p class="hint">
+      Recebimento de fornecedor ou producao propria. Motivo e opcional.
+    </p>
+    <form id="form-entrada" novalidate>
+      <div class="form-row">
+        <label for="entrada-code">
+          Produto (codigo ou nome)
+        </label>
+        <input type="text" id="entrada-code" required maxlength="120" autocomplete="off">
+        <div class="produto-selecionado" id="entrada-selecionado" hidden>
+          <strong id="entrada-nome"></strong>
+          <span>Saldo atual: <span id="entrada-saldo">0</span></span>
+          <input type="hidden" id="entrada-product-id">
+        </div>
+      </div>
+      <div class="form-row-grid">
+        <div class="form-row">
+          <label for="entrada-qty">Quantidade *</label>
+          <input type="text" id="entrada-qty" required inputmode="decimal" placeholder="Ex: 10 ou 2,500">
+        </div>
+      </div>
+      <div class="form-row">
+        <label for="entrada-reason">
+          Motivo
+          <small>(opcional - nota, fornecedor, lote)</small>
+        </label>
+        <input type="text" id="entrada-reason" maxlength="200" placeholder="Ex: nota 1234, Fornecedor X">
+      </div>
+      <div class="erro-form" id="entrada-erro" hidden></div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Registrar entrada</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- PERDA -->
+  <section class="card tab-panel" id="panel-perda" hidden>
+    <h2>Perda de mercadoria</h2>
+    <p class="hint">
+      Quebra, vencimento ou furto. Motivo <strong>obrigatorio</strong>.
+    </p>
+    <form id="form-perda" novalidate>
+      <div class="form-row">
+        <label for="perda-code">Produto (codigo ou nome)</label>
+        <input type="text" id="perda-code" required maxlength="120" autocomplete="off">
+        <div class="produto-selecionado" id="perda-selecionado" hidden>
+          <strong id="perda-nome"></strong>
+          <span>Saldo atual: <span id="perda-saldo">0</span></span>
+          <input type="hidden" id="perda-product-id">
+        </div>
+      </div>
+      <div class="form-row-grid">
+        <div class="form-row">
+          <label for="perda-qty">Quantidade perdida *</label>
+          <input type="text" id="perda-qty" required inputmode="decimal" placeholder="Ex: 3 ou 1,200">
+        </div>
+      </div>
+      <div class="form-row">
+        <label for="perda-reason">Motivo *</label>
+        <textarea id="perda-reason" required maxlength="200" rows="2"
+                  placeholder="Ex: vencimento 14/10, quebra na vitrine"></textarea>
+      </div>
+      <div class="erro-form" id="perda-erro" hidden></div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Registrar perda</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- AJUSTE -->
+  <section class="card tab-panel" id="panel-ajuste" hidden>
+    <h2>Ajuste de inventario</h2>
+    <p class="hint">
+      Define um <strong>novo saldo</strong> absoluto. Motivo <strong>obrigatorio</strong>.
+      Produto inativo precisa ser reativado antes do ajuste.
+    </p>
+    <form id="form-ajuste" novalidate>
+      <div class="form-row">
+        <label for="ajuste-code">Produto (codigo ou nome)</label>
+        <input type="text" id="ajuste-code" required maxlength="120" autocomplete="off">
+        <div class="produto-selecionado" id="ajuste-selecionado" hidden>
+          <strong id="ajuste-nome"></strong>
+          <span>Saldo atual: <span id="ajuste-saldo">0</span></span>
+          <input type="hidden" id="ajuste-product-id">
+        </div>
+      </div>
+      <div class="form-row-grid">
+        <div class="form-row">
+          <label for="ajuste-novo">Novo saldo *</label>
+          <input type="text" id="ajuste-novo" required inputmode="decimal" placeholder="Ex: 50 ou 2,500">
+        </div>
+        <div class="form-row">
+          <label>Delta previsto</label>
+          <strong id="ajuste-delta">—</strong>
+        </div>
+      </div>
+      <div class="form-row">
+        <label for="ajuste-reason">Motivo *</label>
+        <textarea id="ajuste-reason" required maxlength="200" rows="2"
+                  placeholder="Ex: inventario mensal, divergencia encontrada"></textarea>
+      </div>
+      <div class="erro-form" id="ajuste-erro" hidden></div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Confirmar ajuste</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- HISTORICO -->
+  <section class="card tab-panel" id="panel-historico" hidden>
+    <h2>Historico de movimentacoes</h2>
+    <form id="form-filtros" class="filtros-historico">
+      <div class="form-row">
+        <label for="filtro-produto">Produto (opcional)</label>
+        <input type="text" id="filtro-produto" maxlength="120" placeholder="Nome ou codigo">
+        <input type="hidden" id="filtro-product-id">
+      </div>
+      <div class="form-row">
+        <label for="filtro-tipo">Tipo</label>
+        <select id="filtro-tipo">
+          <option value="">Todos</option>
+          <option value="entrada">Entrada</option>
+          <option value="venda">Venda</option>
+          <option value="ajuste">Ajuste</option>
+          <option value="perda">Perda</option>
+          <option value="estorno">Estorno</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="filtro-de">De</label>
+        <input type="date" id="filtro-de">
+      </div>
+      <div class="form-row">
+        <label for="filtro-ate">Ate</label>
+        <input type="date" id="filtro-ate">
+      </div>
+      <div class="form-row form-row-actions">
+        <button type="submit" class="btn btn-primary">Aplicar</button>
+        <button type="button" id="btn-limpar-filtros" class="btn">Limpar</button>
+      </div>
+    </form>
+
+    <div class="table-wrapper">
+      <table class="table-produtos" id="tabela-historico">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Produto</th>
+            <th>Tipo</th>
+            <th class="num">Qtd</th>
+            <th>Motivo</th>
+            <th>Operador</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-historico"></tbody>
+      </table>
+      <p id="historico-vazio" class="empty-state" hidden>Nenhuma movimentacao encontrada.</p>
+    </div>
+  </section>
+</main>
+
+<script src="/static/js/admin_stock.js"></script>
+{% endblock %}
