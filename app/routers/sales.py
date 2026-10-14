@@ -333,7 +333,7 @@ def finalize(
                 _settings_dict(db),
                 operator_name=user.name,
             )
-            get_printer().print_job(PrintJob(lines=receipt_lines))
+            get_printer(db).print_job(PrintJob(lines=receipt_lines))
             printed = True
         except Exception as exc:  # pragma: no cover - defensivo
             print_error = str(exc)
@@ -411,7 +411,7 @@ def reprint(
     printed = False
     print_error: Optional[str] = None
     try:
-        get_printer().print_job(PrintJob(lines=receipt_lines))
+        get_printer(db).print_job(PrintJob(lines=receipt_lines))
         printed = True
     except Exception as exc:  # pragma: no cover
         print_error = str(exc)

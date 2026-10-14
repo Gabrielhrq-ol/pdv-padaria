@@ -11,6 +11,9 @@
       {{ user.name }} <small>({{ user.role }})</small>
     </span>
     <a href="/pdv" class="btn">Abrir PDV</a>
+    {% if user.role == 'admin' %}
+    <a href="/admin/printer" class="btn">Config</a>
+    {% endif %}
     <button type="button" id="btn-novo" class="btn btn-primary">+ Novo produto</button>
     <button type="button" id="btn-sair" class="btn">Sair</button>
   </div>

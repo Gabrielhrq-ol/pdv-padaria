@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Impressora - Configuração{% endblock %}
+
+{% block body %}
+<header class="page-header">
+  <h1>Configuração da impressora</h1>
+  <div class="header-actions">
+    <span class="env-badge">{{ env }}</span>
+    <span class="user-info">
+      {{ user.name }} <small>({{ user.role }})</small>
+    </span>
+    <a href="/products" class="btn btn-sm">Produtos</a>
+    <a href="/pdv" class="btn btn-sm">PDV</a>
+    <button type="button" id="btn-sair" class="btn btn-sm">Sair</button>
+  </div>
+</header>
+
+<main class="container admin-container">
+  <section class="card">
+    <h2>Backend atual</h2>
+    <p>Impressora ativa: <strong id="label-ativo">—</strong></p>
+  </section>
+
+  <section class="card">
+    <h2>Configuração</h2>
+    <form id="form-printer" novalidate>
+      <div class="form-row">
+        <label for="field-backend">Backend</label>
+        <select id="field-backend">
+          <option value="dummy">Dummy (sem impressora - desenvolvimento)</option>
+          <option value="win32raw">Win32Raw (driver do Windows)</option>
+        </select>
+      </div>
+
+      <div class="form-row" id="row-name">
+        <label for="field-name">
+          Nome da impressora
+          <small>(exato como aparece em "Impressoras e scanners")</small>
+        </label>
+        <input type="text" id="field-name" maxlength="120" placeholder="POS-58 Printer">
+      </div>
+
+      <div class="form-row" id="row-codepage">
+        <label for="field-codepage">Codepage</label>
+        <select id="field-codepage">
+          <option value="">(default da impressora)</option>
+          <option value="CP437">CP437</option>
+          <option value="CP850">CP850 (Latin-1 OEM)</option>
+          <option value="CP858">CP858 (como CP850 + €)</option>
+          <option value="CP860">CP860 (Português)</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label>
+          <input type="checkbox" id="field-cut">
+          Enviar comando de corte ao final
+          <small>(desligue se a impressora não tiver guilhotina)</small>
+        </label>
+      </div>
+
+      <div id="erro-form" class="erro-form" hidden></div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Testar impressora</h2>
+    <p>
+      Envia um cupom curto pelo backend <strong>salvo</strong>. Útil pra
+      conferir se a impressora responde e se os acentos saem OK.
+    </p>
+    <button type="button" id="btn-test" class="btn btn-primary">
+      Imprimir cupom de teste
+    </button>
+    <div id="test-result" class="test-result" hidden></div>
+  </section>
+
+  <section class="card">
+    <h2>Status do teste da POS-5890U-L</h2>
+    <p class="hint">
+      Até o teste real via AnyDesk no PC do cliente, deixe o backend em
+      <strong>Dummy</strong>. Quando o teste rolar:
+    </p>
+    <ol class="hint">
+      <li>Instale a impressora no Windows do caixa.</li>
+      <li>Confirme o nome exato em "Impressoras e scanners".</li>
+      <li>Troque backend aqui para <strong>Win32Raw</strong> e preencha o nome.</li>
+      <li>Aperte "Imprimir cupom de teste". Teste acentos e corte.</li>
+      <li>Se o acento sair errado, teste CP850 → CP858 → CP860 nesta ordem.</li>
+      <li>Se a impressora não tiver guilhotina, deixe "corte" desligado.</li>
+    </ol>
+  </section>
+</main>
+
+<script src="/static/js/admin_printer.js"></script>
+{% endblock %}

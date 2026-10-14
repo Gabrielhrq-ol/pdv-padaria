@@ -9,6 +9,7 @@
   "receipt_columns": 32,
   "receipt_show_barcode": false,
   "receipt_disclaimer": "DOCUMENTO SEM VALOR FISCAL",
+  "printer_backend": "dummy",
   "printer_name": "",
   "printer_codepage": "",
   "printer_auto_cut": false,

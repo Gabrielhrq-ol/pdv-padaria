@@ -42,6 +42,7 @@ ALLOWED_KEYS: set[str] = {
     "receipt_columns",
     "receipt_show_barcode",
     "receipt_disclaimer",
+    "printer_backend",
     "printer_name",
     "printer_codepage",
     "printer_auto_cut",

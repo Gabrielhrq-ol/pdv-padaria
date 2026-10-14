@@ -1,6 +1,5 @@
-# Dependências de produção da Fase 2.
+# Dependências de produção da Fase 5 (preparatória).
 # Versões fixadas (pin exato).
-# python-escpos entra na Fase 5 (impressora).
 
 fastapi==0.115.6
 uvicorn[standard]==0.32.1
@@ -11,3 +10,7 @@ pydantic-settings==2.6.1
 Jinja2==3.1.4
 argon2-cffi==23.1.0
 itsdangerous==2.2.0
+# Impressora ESC/POS; usada apenas quando setting printer_backend != dummy.
+python-escpos==3.1
+# pywin32 só no Windows (necessário para Win32Raw). Em Linux é ignorado.
+pywin32==308 ; sys_platform == 'win32'

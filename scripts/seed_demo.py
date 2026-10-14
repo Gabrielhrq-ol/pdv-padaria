@@ -42,6 +42,7 @@ DEMO_SETTINGS: dict[str, str] = {
     "allow_negative_stock": "true",
     "default_print_after_sale": "true",
     "payment_methods": '["dinheiro","debito","credito","pix","outros"]',
+    "printer_backend": "dummy",
 }
 
 

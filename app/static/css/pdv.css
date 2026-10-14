@@ -338,6 +338,57 @@ html, body {
   font-size: 11px;
 }
 
+/* ---------- Admin -> impressora (Fase 5 prep) ---------- */
+
+.admin-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 16px 20px;
+}
+
+.card h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: #1f3a5f;
+}
+
+.form-actions {
+  margin-top: 12px;
+}
+
+.hint {
+  font-size: 12px;
+  color: #555;
+}
+
+.hint small { color: #777; }
+
+.test-result {
+  margin-top: 12px;
+}
+
+.result-ok { color: #0a6b1b; font-weight: 600; }
+.result-erro { color: #a71e1e; font-weight: 600; }
+
+.receipt-preview {
+  background: #111;
+  color: #e8ecf1;
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 12px;
+  white-space: pre;
+  overflow-x: auto;
+  margin: 8px 0 0;
+}
+
 /* ---------- Tela do PDV (Fase 3) ---------- */
 
 .pdv-body {

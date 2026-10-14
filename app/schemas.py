@@ -279,3 +279,31 @@ class FinalizeResult(StrictBase):
     receipt_lines: list[str] = Field(default_factory=list)
     printed: bool
     print_error: Optional[str] = None
+
+
+# ---------- Admin / Printer settings ----------
+
+PrinterBackend = Literal["dummy", "win32raw"]
+PrinterCodepage = Literal["", "CP437", "CP850", "CP858", "CP860"]
+
+
+class PrinterSettingsOut(StrictBase):
+    printer_backend: PrinterBackend
+    printer_name: str = ""
+    printer_codepage: PrinterCodepage = ""
+    printer_auto_cut: bool = False
+    active_label: str  # texto legivel do backend atual (ex "Win32Raw (POS-58)")
+
+
+class PrinterSettingsUpdate(StrictBase):
+    printer_backend: PrinterBackend
+    printer_name: Annotated[str, StringConstraints(max_length=120, strip_whitespace=True)] = ""
+    printer_codepage: PrinterCodepage = ""
+    printer_auto_cut: bool = False
+
+
+class PrinterTestResult(StrictBase):
+    backend: str
+    printed: bool
+    print_error: Optional[str] = None
+    lines: list[str] = Field(default_factory=list)
