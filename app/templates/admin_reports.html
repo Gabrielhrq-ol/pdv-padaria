@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Relatorios - PDV Padaria{% endblock %}
+
+{% block body %}
+<header class="page-header">
+  <h1>Relatorios</h1>
+  <div class="header-actions">
+    <span class="env-badge">{{ env }}</span>
+    <span class="user-info">
+      {{ user.name }} <small>({{ user.role }})</small>
+    </span>
+    <a href="/products" class="btn btn-sm">Produtos</a>
+    <a href="/pdv" class="btn btn-sm">PDV</a>
+    <a href="/caixa" class="btn btn-sm">Caixa</a>
+    <a href="/admin/stock" class="btn btn-sm">Estoque</a>
+    <a href="/admin/printer" class="btn btn-sm">Impressora</a>
+    <button type="button" id="btn-sair" class="btn btn-sm">Sair</button>
+  </div>
+</header>
+
+<main class="container admin-container">
+  <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+
+  <!-- Dashboard do dia -->
+  <section class="card">
+    <h2>Hoje</h2>
+    <div class="dashboard-grid">
+      <div class="dashboard-card">
+        <span class="dash-label">Vendas finalizadas</span>
+        <strong class="dash-value" id="dash-sales-count">—</strong>
+      </div>
+      <div class="dashboard-card">
+        <span class="dash-label">Faturamento</span>
+        <strong class="dash-value" id="dash-revenue">—</strong>
+      </div>
+      <div class="dashboard-card">
+        <span class="dash-label">Ticket medio</span>
+        <strong class="dash-value" id="dash-avg">—</strong>
+      </div>
+      <div class="dashboard-card">
+        <span class="dash-label">Caixa aberto?</span>
+        <strong class="dash-value" id="dash-cash">—</strong>
+      </div>
+      <div class="dashboard-card">
+        <span class="dash-label">Produtos em alerta</span>
+        <strong class="dash-value" id="dash-low">—</strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filtros globais -->
+  <section class="card">
+    <h2>Periodo</h2>
+    <form id="form-filtros" class="filtros-historico">
+      <div class="form-row">
+        <label for="filtro-de">De</label>
+        <input type="date" id="filtro-de">
+      </div>
+      <div class="form-row">
+        <label for="filtro-ate">Ate</label>
+        <input type="date" id="filtro-ate">
+      </div>
+      <div class="form-row form-row-actions">
+        <button type="submit" class="btn btn-primary">Aplicar</button>
+        <button type="button" id="btn-limpar" class="btn">Limpar</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Abas pros 6 relatorios -->
+  <nav class="tabs" role="tablist">
+    <button type="button" class="tab active" data-tab="period" role="tab">Vendas por periodo</button>
+    <button type="button" class="tab" data-tab="cash" role="tab">Caixas fechados</button>
+    <button type="button" class="tab" data-tab="operator" role="tab">Por operador</button>
+    <button type="button" class="tab" data-tab="method" role="tab">Por forma</button>
+    <button type="button" class="tab" data-tab="products" role="tab">Top produtos</button>
+    <button type="button" class="tab" data-tab="disc" role="tab">Descontos/Cancel.</button>
+  </nav>
+
+  <!-- 1. Vendas por periodo -->
+  <section class="card tab-panel" id="panel-period">
+    <div class="panel-head">
+      <h3>Vendas por periodo</h3>
+      <a id="csv-period" class="btn btn-sm" href="/api/reports/sales-period/csv">Exportar CSV</a>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" id="chk-incluir-canceladas">
+      <span>Incluir canceladas</span>
+    </label>
+    <table class="table-produtos">
+      <thead>
+        <tr><th>Dia</th><th class="num">Vendas</th><th class="num">Faturamento</th><th class="num">Ticket medio</th></tr>
+      </thead>
+      <tbody id="tbody-period"></tbody>
+      <tfoot><tr id="tr-period-total"></tr></tfoot>
+    </table>
+    <p id="period-vazio" class="empty-state" hidden>Nenhum dado no periodo.</p>
+  </section>
+
+  <!-- 2. Caixas fechados -->
+  <section class="card tab-panel" id="panel-cash" hidden>
+    <div class="panel-head">
+      <h3>Caixas fechados</h3>
+      <a id="csv-cash" class="btn btn-sm" href="/api/reports/cash-sessions/csv">Exportar CSV</a>
+    </div>
+    <table class="table-produtos">
+      <thead>
+        <tr>
+          <th>#</th><th>Abertura</th><th>Aberto por</th>
+          <th>Fechamento</th><th>Fechado por</th>
+          <th class="num">Fundo</th><th class="num">Esperado</th>
+          <th class="num">Declarado</th><th class="num">Diferenca</th>
+          <th>Motivo</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-cash"></tbody>
+    </table>
+    <p id="cash-vazio" class="empty-state" hidden>Nenhum caixa fechado no periodo.</p>
+  </section>
+
+  <!-- 3. Por operador -->
+  <section class="card tab-panel" id="panel-operator" hidden>
+    <div class="panel-head">
+      <h3>Vendas por operador</h3>
+      <a id="csv-operator" class="btn btn-sm" href="/api/reports/sales-by-operator/csv">Exportar CSV</a>
+    </div>
+    <table class="table-produtos">
+      <thead>
+        <tr><th>Operador</th><th class="num">Vendas</th><th class="num">Faturamento</th><th class="num">Descontos</th><th class="num">Canceladas</th></tr>
+      </thead>
+      <tbody id="tbody-operator"></tbody>
+    </table>
+    <p id="operator-vazio" class="empty-state" hidden>Nenhum dado no periodo.</p>
+  </section>
+
+  <!-- 4. Por forma -->
+  <section class="card tab-panel" id="panel-method" hidden>
+    <div class="panel-head">
+      <h3>Vendas por forma de pagamento</h3>
+      <a id="csv-method" class="btn btn-sm" href="/api/reports/sales-by-method/csv">Exportar CSV</a>
+    </div>
+    <table class="table-produtos">
+      <thead>
+        <tr><th>Forma</th><th class="num">Vendas</th><th class="num">Total liquido</th></tr>
+      </thead>
+      <tbody id="tbody-method"></tbody>
+    </table>
+    <p id="method-vazio" class="empty-state" hidden>Nenhum dado no periodo.</p>
+  </section>
+
+  <!-- 5. Top produtos -->
+  <section class="card tab-panel" id="panel-products" hidden>
+    <div class="panel-head">
+      <h3>Produtos mais vendidos</h3>
+      <a id="csv-products" class="btn btn-sm" href="/api/reports/top-products/csv">Exportar CSV</a>
+    </div>
+    <div class="form-row-grid">
+      <div class="form-row">
+        <label for="prod-order">Ordenar por</label>
+        <select id="prod-order">
+          <option value="revenue">Faturamento</option>
+          <option value="qty">Quantidade</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="prod-limit">Top</label>
+        <input type="number" id="prod-limit" value="20" min="1" max="500">
+      </div>
+    </div>
+    <table class="table-produtos">
+      <thead>
+        <tr><th>#</th><th>Produto</th><th>Un.</th><th class="num">Qtd</th><th class="num">Faturamento</th></tr>
+      </thead>
+      <tbody id="tbody-products"></tbody>
+    </table>
+    <p id="products-vazio" class="empty-state" hidden>Nenhum produto vendido no periodo.</p>
+  </section>
+
+  <!-- 6. Descontos e cancelamentos -->
+  <section class="card tab-panel" id="panel-disc" hidden>
+    <div class="panel-head">
+      <h3>Descontos e cancelamentos</h3>
+      <a id="csv-disc" class="btn btn-sm" href="/api/reports/discounts-cancellations/csv">Exportar CSV</a>
+    </div>
+    <table class="table-produtos">
+      <thead>
+        <tr><th>Venda</th><th>Tipo</th><th>Data</th><th>Operador</th><th class="num">Total</th><th class="num">Desconto</th><th>Motivo</th></tr>
+      </thead>
+      <tbody id="tbody-disc"></tbody>
+    </table>
+    <p id="disc-vazio" class="empty-state" hidden>Nenhum desconto ou cancelamento no periodo.</p>
+  </section>
+</main>
+
+<script src="/static/js/admin_reports.js"></script>
+{% endblock %}

@@ -509,3 +509,75 @@ class CashSessionSummaryOut(StrictBase):
     sales_cash_cents: int  # dinheiro recebido em vendas finalizadas
     sales_count: int
     expected_cash_cents: int  # opening + suprimentos - sangrias + sales_cash
+
+
+# ---------- Reports (Fase 8) ----------
+
+
+class DashboardOut(StrictBase):
+    today_sales_count: int
+    today_revenue_cents: int
+    today_avg_ticket_cents: int
+    open_cash_session_id: Optional[int]
+    low_stock_count: int
+
+
+class SalesPeriodDayOut(StrictBase):
+    day: str
+    sales_count: int
+    revenue_cents: int
+    avg_ticket_cents: int
+
+
+class SalesPeriodOut(StrictBase):
+    days: list[SalesPeriodDayOut] = Field(default_factory=list)
+    total_count: int
+    total_revenue_cents: int
+    total_avg_ticket_cents: int
+
+
+class ClosedCashRowOut(StrictBase):
+    id: int
+    opened_by_name: Optional[str]
+    opened_at: datetime
+    closed_by_name: Optional[str]
+    closed_at: Optional[datetime]
+    opening_cash_cents: int
+    expected_cash_cents: Optional[int]
+    declared_cash_cents: Optional[int]
+    difference_cents: Optional[int]
+    difference_reason: Optional[str]
+
+
+class OperatorStatsOut(StrictBase):
+    user_id: int
+    user_name: str
+    sales_count: int
+    revenue_cents: int
+    discount_total_cents: int
+    cancelled_count: int
+
+
+class MethodStatsOut(StrictBase):
+    method: str
+    sales_count: int
+    total_cents: int
+
+
+class TopProductRowOut(StrictBase):
+    product_id: int
+    product_name: str
+    unit: Unit
+    qty_milli: int
+    revenue_cents: int
+
+
+class DiscountRowOut(StrictBase):
+    sale_id: int
+    sale_number: int
+    kind: Literal["desconto", "cancelamento"]
+    user_name: Optional[str]
+    occurred_at: Optional[datetime]
+    total_cents: int
+    discount_cents: int
+    reason: Optional[str]
