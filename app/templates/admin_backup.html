@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Backup - PDV Padaria{% endblock %}
+
+{% block body %}
+<header class="page-header">
+  <h1>Backup</h1>
+  <div class="header-actions">
+    <span class="env-badge">{{ env }}</span>
+    <span class="user-info">
+      {{ user.name }} <small>({{ user.role }})</small>
+    </span>
+    <a href="/products" class="btn btn-sm">Produtos</a>
+    <a href="/admin/reports" class="btn btn-sm">Relatorios</a>
+    <a href="/admin/stock" class="btn btn-sm">Estoque</a>
+    <a href="/admin/printer" class="btn btn-sm">Impressora</a>
+    <button type="button" id="btn-sair" class="btn btn-sm">Sair</button>
+  </div>
+</header>
+
+<main class="container admin-container">
+  <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+
+  <section class="card">
+    <h2>Configuracao</h2>
+    <p class="hint">
+      Pastas <strong>externas</strong> ao PC do caixa. Pelo menos uma e
+      obrigatoria. O backup pro Google Drive e feito atraves da pasta
+      sincronizada pelo Google Drive Desktop - voce aponta aqui a pasta
+      local que o Drive sincroniza.
+    </p>
+    <form id="form-settings" novalidate>
+      <div class="form-row">
+        <label for="dir1">Pasta 1 (ex: pendrive E:\pdv-backups)</label>
+        <input type="text" id="dir1" maxlength="260" placeholder="E:\pdv-backups">
+      </div>
+      <div class="form-row">
+        <label for="dir2">Pasta 2 (ex: Google Drive C:\Users\...\My Drive\pdv-backups)</label>
+        <input type="text" id="dir2" maxlength="260" placeholder="C:\Users\dono\My Drive\pdv-backups">
+      </div>
+      <div class="form-row-grid">
+        <div class="form-row">
+          <label for="keep">Manter ultimos</label>
+          <input type="number" id="keep" min="1" max="1000" value="30">
+        </div>
+        <div class="form-row">
+          <label>
+            <input type="checkbox" id="on-close" checked>
+            Backup automatico ao fechar caixa
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            <input type="checkbox" id="compress" checked>
+            Comprimir (.db.gz)
+          </label>
+        </div>
+      </div>
+      <div class="erro-form" id="settings-erro" hidden></div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Salvar configuracao</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Rodar backup agora</h2>
+    <p class="hint">
+      Gera uma copia do banco em todas as pastas configuradas. Util antes
+      de atualizar o sistema ou se o cliente quer uma copia extra.
+    </p>
+    <button type="button" id="btn-run" class="btn btn-primary">Fazer backup agora</button>
+    <div id="run-result" class="test-result" hidden></div>
+  </section>
+
+  <section class="card">
+    <h2>Historico recente</h2>
+    <table class="table-produtos">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Usuario</th>
+          <th>Acao</th>
+          <th>Detalhes</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-history"></tbody>
+    </table>
+    <p id="history-vazio" class="empty-state" hidden>Nenhum backup registrado ainda.</p>
+  </section>
+</main>
+
+<script src="/static/js/admin_backup.js"></script>
+{% endblock %}

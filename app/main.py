@@ -34,6 +34,7 @@ from app.dependencies import get_optional_user
 from app.models import User
 from app.routers import admin as admin_router
 from app.routers import auth as auth_router
+from app.routers import backup as backup_router
 from app.routers import cash as cash_router
 from app.routers import products as products_router
 from app.routers import reports as reports_router
@@ -293,6 +294,25 @@ async def admin_reports_page(
     )
 
 
+@app.get("/admin/backup", include_in_schema=False, response_model=None)
+async def admin_backup_page(
+    request: Request,
+    user: User | None = Depends(get_optional_user),
+) -> HTMLResponse | RedirectResponse:
+    if user is None:
+        return RedirectResponse(url="/login", status_code=302)
+    if user.role != "admin":
+        return RedirectResponse(url="/products", status_code=302)
+    return templates.TemplateResponse(
+        request=request,
+        name="admin_backup.html",
+        context={
+            "env": settings.ENVIRONMENT,
+            "user": {"name": user.name, "username": user.username, "role": user.role},
+        },
+    )
+
+
 @app.get("/health", include_in_schema=False)
 async def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -307,3 +327,4 @@ app.include_router(admin_router.router)
 app.include_router(cash_router.router)
 app.include_router(cash_router.admin_router)
 app.include_router(reports_router.router)
+app.include_router(backup_router.router)

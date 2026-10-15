@@ -581,3 +581,60 @@ class DiscountRowOut(StrictBase):
     total_cents: int
     discount_cents: int
     reason: Optional[str]
+
+
+# ---------- Backup (Fase 9) ----------
+
+BackupDirPath = Annotated[
+    str,
+    StringConstraints(max_length=260, strip_whitespace=True),
+]
+
+
+class BackupSettingsIn(StrictBase):
+    backup_dir_1: Optional[BackupDirPath] = None
+    backup_dir_2: Optional[BackupDirPath] = None
+    backup_keep: int = Field(default=30, ge=1, le=1000)
+    backup_on_cash_close: bool = True
+    backup_compress: bool = True
+
+    @field_validator("backup_dir_1", "backup_dir_2")
+    @classmethod
+    def _empty_as_none(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        s = v.strip()
+        return s or None
+
+
+class BackupSettingsOut(StrictBase):
+    backup_dir_1: Optional[str]
+    backup_dir_2: Optional[str]
+    backup_keep: int
+    backup_on_cash_close: bool
+    backup_compress: bool
+
+
+class BackupDestinationOut(StrictBase):
+    destination: str
+    status: Literal["ok", "fail"]
+    bytes_written: int = 0
+    file_name: Optional[str] = None
+    error: Optional[str] = None
+
+
+class BackupRunOut(StrictBase):
+    started_at: datetime
+    finished_at: datetime
+    source_bytes: int
+    compressed: bool
+    ok_count: int
+    fail_count: int
+    results: list[BackupDestinationOut] = Field(default_factory=list)
+
+
+class BackupHistoryEntry(StrictBase):
+    created_at: datetime
+    user_name: Optional[str]
+    action: str  # "backup_run" | "backup_skipped" | "backup_failed"
+    details: Optional[str]

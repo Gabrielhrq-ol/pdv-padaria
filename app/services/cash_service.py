@@ -423,4 +423,15 @@ def close_session(
     )
     db.commit()
     db.refresh(session_row)
+
+    # Hook: dispara backup em background se setting on. Nao pode travar
+    # nem reverter o fechamento se o backup falhar.
+    try:
+        from app.services.backup_hook import trigger_post_close_backup
+
+        trigger_post_close_backup(db, user)
+    except Exception:
+        # Ultra-defensivo: nunca propagar erro de backup ao fechamento.
+        pass
+
     return session_row
