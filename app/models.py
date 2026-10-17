@@ -214,6 +214,9 @@ class SaleItem(Base):
     internal_code: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
     unit: Mapped[str] = mapped_column(String(3), nullable=False)
     unit_price_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Snapshot do custo pra margem historica. Nullable: produto sem custo
+    # cadastrado nao trava venda e e ignorado no calculo de margem (Fase 11).
+    unit_cost_cents: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     qty_milli: Mapped[int] = mapped_column(Integer, nullable=False)
     line_total_cents: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -229,6 +232,10 @@ class SaleItem(Base):
         ),
         CheckConstraint(
             "line_total_cents >= 0", name="ck_sale_items_total_non_negative"
+        ),
+        CheckConstraint(
+            "unit_cost_cents IS NULL OR unit_cost_cents >= 0",
+            name="ck_sale_items_cost_non_negative",
         ),
         CheckConstraint("unit IN ('UN', 'KG', 'L')", name="ck_sale_items_unit"),
         Index("ix_sale_items_sale_id", "sale_id"),

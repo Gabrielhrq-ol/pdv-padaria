@@ -158,11 +158,16 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 # ---------- rotas de UI ----------
 
 
+def _home_for(user: User) -> str:
+    """Rota default por papel (Fase 11): admin -> painel, caixa -> PDV."""
+    return "/admin" if user.role == "admin" else "/pdv"
+
+
 @app.get("/", include_in_schema=False)
 async def root(user: User | None = Depends(get_optional_user)) -> RedirectResponse:
     if user is None:
         return RedirectResponse(url="/login", status_code=302)
-    return RedirectResponse(url="/products", status_code=302)
+    return RedirectResponse(url=_home_for(user), status_code=302)
 
 
 @app.get("/login", include_in_schema=False, response_model=None)
@@ -172,7 +177,7 @@ async def login_page(
 ) -> HTMLResponse | RedirectResponse:
     # Se ja esta logado, nao mostra o form.
     if user is not None:
-        return RedirectResponse(url="/products", status_code=302)
+        return RedirectResponse(url=_home_for(user), status_code=302)
     return templates.TemplateResponse(
         request=request,
         name="login.html",
@@ -249,6 +254,25 @@ async def admin_printer_page(
     return templates.TemplateResponse(
         request=request,
         name="admin_printer.html",
+        context={
+            "env": settings.ENVIRONMENT,
+            "user": {"name": user.name, "username": user.username, "role": user.role},
+        },
+    )
+
+
+@app.get("/admin", include_in_schema=False, response_model=None)
+async def admin_dashboard_page(
+    request: Request,
+    user: User | None = Depends(get_optional_user),
+) -> HTMLResponse | RedirectResponse:
+    if user is None:
+        return RedirectResponse(url="/login", status_code=302)
+    if user.role != "admin":
+        return RedirectResponse(url="/pdv", status_code=302)
+    return templates.TemplateResponse(
+        request=request,
+        name="admin_dashboard.html",
         context={
             "env": settings.ENVIRONMENT,
             "user": {"name": user.name, "username": user.username, "role": user.role},

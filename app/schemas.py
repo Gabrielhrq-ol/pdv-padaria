@@ -518,6 +518,10 @@ class DashboardOut(StrictBase):
     today_sales_count: int
     today_revenue_cents: int
     today_avg_ticket_cents: int
+    today_margin_cents: int = 0
+    today_margin_pct: float = 0.0
+    today_margin_covered_items: int = 0
+    today_margin_total_items: int = 0
     open_cash_session_id: Optional[int]
     low_stock_count: int
 
@@ -581,6 +585,27 @@ class DiscountRowOut(StrictBase):
     total_cents: int
     discount_cents: int
     reason: Optional[str]
+
+
+class MarginProductRowOut(StrictBase):
+    product_id: int
+    product_name: str
+    unit: Unit
+    qty_milli: int
+    revenue_cents: int
+    cost_cents: int
+    margin_cents: int
+    margin_pct: float
+
+
+class MarginSummaryOut(StrictBase):
+    rows: list[MarginProductRowOut] = Field(default_factory=list)
+    total_revenue_cents: int
+    total_cost_cents: int
+    total_margin_cents: int
+    total_margin_pct: float
+    covered_items: int
+    uncovered_items: int
 
 
 # ---------- Backup (Fase 9) ----------

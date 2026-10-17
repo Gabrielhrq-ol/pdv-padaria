@@ -10,13 +10,14 @@
     <span class="user-info">
       {{ user.name }} <small>({{ user.role }})</small>
     </span>
-    <a href="/pdv" class="btn">Abrir PDV</a>
+    {% if user.role == 'admin' %}
+    <a href="/admin" class="btn">Painel</a>
+    {% endif %}
+    <a href="/pdv" class="btn">PDV</a>
     <a href="/caixa" class="btn">Caixa</a>
     {% if user.role == 'admin' %}
     <a href="/admin/stock" class="btn">Estoque</a>
     <a href="/admin/reports" class="btn">Relatorios</a>
-    <a href="/admin/backup" class="btn">Backup</a>
-    <a href="/admin/printer" class="btn">Config</a>
     {% endif %}
     <button type="button" id="btn-low-stock" class="btn btn-warn" hidden>
       <span id="low-stock-count">0</span> em alerta

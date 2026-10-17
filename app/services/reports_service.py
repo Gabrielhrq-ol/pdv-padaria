@@ -55,12 +55,75 @@ class DashboardTotals:
     today_sales_count: int
     today_revenue_cents: int
     today_avg_ticket_cents: int
+    today_margin_cents: int
+    today_margin_pct: float  # 0..100; 0 se revenue_coberto == 0
+    today_margin_covered_items: int  # itens com cost_cents nao-nulo
+    today_margin_total_items: int  # itens vendidos no dia
     open_cash_session_id: Optional[int]
     low_stock_count: int
 
 
+def _today_margin(db: Session, start: datetime, end: datetime) -> tuple[int, int, int, int]:
+    """
+    Retorna (margin_cents, revenue_coberto_cents, covered_items, total_items)
+    dos sale_items do dia. Ignora linhas com unit_cost_cents NULL.
+    - margin = sum(line_total_cents - unit_cost_cents * qty_milli / 1000)
+      aproximando com arredondamento igual ao de line_total_cents.
+    """
+    # total_items (todas as linhas do dia)
+    total_items = int(
+        db.execute(
+            select(func.count(SaleItem.id))
+            .join(Sale, Sale.id == SaleItem.sale_id)
+            .where(
+                Sale.status == "completed",
+                Sale.finalized_at >= start,
+                Sale.finalized_at <= end,
+            )
+        ).scalar_one() or 0
+    )
+    # itens com custo cadastrado
+    covered_items = int(
+        db.execute(
+            select(func.count(SaleItem.id))
+            .join(Sale, Sale.id == SaleItem.sale_id)
+            .where(
+                Sale.status == "completed",
+                Sale.finalized_at >= start,
+                Sale.finalized_at <= end,
+                SaleItem.unit_cost_cents.is_not(None),
+            )
+        ).scalar_one() or 0
+    )
+    if covered_items == 0:
+        return 0, 0, 0, total_items
+
+    # soma revenue e cost_raw (unit_cost * qty_milli). Divide por 1000 no
+    # Python com arredondamento banker's half-up, pra evitar perda de precisao
+    # por dividir linha a linha no SQL (0.5+0.5=1 em float, 0+0=0 em int).
+    row = db.execute(
+        select(
+            func.coalesce(func.sum(SaleItem.line_total_cents), 0),
+            func.coalesce(
+                func.sum(SaleItem.unit_cost_cents * SaleItem.qty_milli), 0
+            ),
+        )
+        .join(Sale, Sale.id == SaleItem.sale_id)
+        .where(
+            Sale.status == "completed",
+            Sale.finalized_at >= start,
+            Sale.finalized_at <= end,
+            SaleItem.unit_cost_cents.is_not(None),
+        )
+    ).one()
+    revenue_coberto = int(row[0] or 0)
+    cost_raw = int(row[1] or 0)  # unit_cost * qty_milli, antes de dividir por 1000
+    cost_total = (cost_raw + 500) // 1000
+    return revenue_coberto - cost_total, revenue_coberto, covered_items, total_items
+
+
 def dashboard(db: Session) -> DashboardTotals:
-    """Totais do dia + estado de caixa + alertas."""
+    """Totais do dia + estado de caixa + alertas + margem bruta."""
     start, end = _today_window()
     row = db.execute(
         select(
@@ -75,6 +138,9 @@ def dashboard(db: Session) -> DashboardTotals:
     count = int(row[0] or 0)
     revenue = int(row[1] or 0)
     avg = revenue // count if count > 0 else 0
+
+    margin, revenue_coberto, covered, total_items = _today_margin(db, start, end)
+    margin_pct = (margin / revenue_coberto * 100.0) if revenue_coberto > 0 else 0.0
 
     open_cash = db.execute(
         select(CashSession.id).where(CashSession.status == "open")
@@ -92,6 +158,10 @@ def dashboard(db: Session) -> DashboardTotals:
         today_sales_count=count,
         today_revenue_cents=revenue,
         today_avg_ticket_cents=avg,
+        today_margin_cents=margin,
+        today_margin_pct=round(margin_pct, 2),
+        today_margin_covered_items=covered,
+        today_margin_total_items=total_items,
         open_cash_session_id=open_cash,
         low_stock_count=int(low or 0),
     )
@@ -488,3 +558,130 @@ def discounts_and_cancellations(
         reverse=True,
     )
     return rows[:limit]
+
+
+# ---------- 7. margem por produto (Fase 11) ----------
+
+
+@dataclass
+class MarginProductRow:
+    product_id: int
+    product_name: str
+    unit: str
+    qty_milli: int
+    revenue_cents: int
+    cost_cents: int
+    margin_cents: int
+    margin_pct: float  # (margin / revenue) * 100
+
+
+@dataclass
+class MarginSummary:
+    rows: list[MarginProductRow]
+    total_revenue_cents: int
+    total_cost_cents: int
+    total_margin_cents: int
+    total_margin_pct: float
+    covered_items: int
+    uncovered_items: int  # linhas sem unit_cost_cents
+
+
+def margin_by_product(
+    db: Session,
+    *,
+    date_from: Optional[datetime] = None,
+    date_to: Optional[datetime] = None,
+    order_by: str = "margin",  # "margin" | "pct" | "revenue"
+    limit: int = 100,
+) -> MarginSummary:
+    """
+    Agrupa por produto considerando SOMENTE linhas com unit_cost_cents.
+    Produtos sem custo cadastrado aparecem no contador uncovered_items
+    mas nao entram nos totais nem na lista.
+    """
+    if limit <= 0 or limit > 1000:
+        limit = 100
+    if order_by not in ("margin", "pct", "revenue"):
+        order_by = "margin"
+
+    # linhas sem custo
+    stmt_unc = (
+        select(func.count(SaleItem.id))
+        .join(Sale, Sale.id == SaleItem.sale_id)
+        .where(
+            Sale.status == "completed",
+            SaleItem.unit_cost_cents.is_(None),
+        )
+    )
+    stmt_unc = _apply_date_filter(stmt_unc, Sale.finalized_at, date_from, date_to)
+    uncovered = int(db.execute(stmt_unc).scalar_one() or 0)
+
+    # agregacao por produto, so com custo. cost_raw e somado antes de dividir
+    # por 1000 (arredondamento consistente, feito no Python).
+    stmt = (
+        select(
+            SaleItem.product_id,
+            SaleItem.product_name,
+            SaleItem.unit,
+            func.coalesce(func.sum(SaleItem.qty_milli), 0).label("qty"),
+            func.coalesce(func.sum(SaleItem.line_total_cents), 0).label("revenue"),
+            func.coalesce(
+                func.sum(SaleItem.unit_cost_cents * SaleItem.qty_milli), 0
+            ).label("cost_raw"),
+            func.count(SaleItem.id).label("items"),
+        )
+        .join(Sale, Sale.id == SaleItem.sale_id)
+        .where(
+            Sale.status == "completed",
+            SaleItem.unit_cost_cents.is_not(None),
+        )
+        .group_by(SaleItem.product_id, SaleItem.product_name, SaleItem.unit)
+    )
+    stmt = _apply_date_filter(stmt, Sale.finalized_at, date_from, date_to)
+
+    rows_raw = db.execute(stmt).all()
+    rows: list[MarginProductRow] = []
+    total_rev = 0
+    total_cost = 0
+    covered = 0
+    for r in rows_raw:
+        rev = int(r.revenue or 0)
+        cost = (int(r.cost_raw or 0) + 500) // 1000
+        margin = rev - cost
+        pct = (margin / rev * 100.0) if rev > 0 else 0.0
+        rows.append(
+            MarginProductRow(
+                product_id=int(r.product_id),
+                product_name=r.product_name,
+                unit=r.unit,
+                qty_milli=int(r.qty or 0),
+                revenue_cents=rev,
+                cost_cents=cost,
+                margin_cents=margin,
+                margin_pct=round(pct, 2),
+            )
+        )
+        total_rev += rev
+        total_cost += cost
+        covered += int(r.items or 0)
+
+    if order_by == "pct":
+        rows.sort(key=lambda x: x.margin_pct, reverse=True)
+    elif order_by == "revenue":
+        rows.sort(key=lambda x: x.revenue_cents, reverse=True)
+    else:
+        rows.sort(key=lambda x: x.margin_cents, reverse=True)
+    rows = rows[:limit]
+
+    total_margin = total_rev - total_cost
+    total_pct = (total_margin / total_rev * 100.0) if total_rev > 0 else 0.0
+
+    return MarginSummary(
+        rows=rows,
+        total_revenue_cents=total_rev,
+        total_cost_cents=total_cost,
+        total_margin_cents=total_margin,
+        total_margin_pct=round(total_pct, 2),
+        covered_items=covered,
+        uncovered_items=uncovered,
+    )

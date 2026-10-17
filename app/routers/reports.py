@@ -20,6 +20,8 @@ from app.schemas import (
     ClosedCashRowOut,
     DashboardOut,
     DiscountRowOut,
+    MarginProductRowOut,
+    MarginSummaryOut,
     MethodStatsOut,
     OperatorStatsOut,
     SalesPeriodDayOut,
@@ -95,6 +97,10 @@ def dashboard(
         today_sales_count=d.today_sales_count,
         today_revenue_cents=d.today_revenue_cents,
         today_avg_ticket_cents=d.today_avg_ticket_cents,
+        today_margin_cents=d.today_margin_cents,
+        today_margin_pct=d.today_margin_pct,
+        today_margin_covered_items=d.today_margin_covered_items,
+        today_margin_total_items=d.today_margin_total_items,
         open_cash_session_id=d.open_cash_session_id,
         low_stock_count=d.low_stock_count,
     )
@@ -417,5 +423,100 @@ def discounts_cancellations_csv(
     return _csv_response(
         "descontos-cancelamentos.csv",
         ["Venda #", "Tipo", "Data", "Operador", "Total", "Desconto", "Motivo"],
+        data,
+    )
+
+
+# ---------- 7. margem (Fase 11) ----------
+
+
+@router.get("/margins", response_model=MarginSummaryOut)
+def margins(
+    date_from: Optional[datetime] = Query(default=None),
+    date_to: Optional[datetime] = Query(default=None),
+    order_by: str = Query(default="margin", pattern="^(margin|pct|revenue)$"),
+    limit: int = Query(default=100, ge=1, le=1000),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> MarginSummaryOut:
+    r = reports_service.margin_by_product(
+        db,
+        date_from=date_from,
+        date_to=date_to,
+        order_by=order_by,
+        limit=limit,
+    )
+    return MarginSummaryOut(
+        rows=[
+            MarginProductRowOut(
+                product_id=row.product_id,
+                product_name=row.product_name,
+                unit=row.unit,  # type: ignore[arg-type]
+                qty_milli=row.qty_milli,
+                revenue_cents=row.revenue_cents,
+                cost_cents=row.cost_cents,
+                margin_cents=row.margin_cents,
+                margin_pct=row.margin_pct,
+            )
+            for row in r.rows
+        ],
+        total_revenue_cents=r.total_revenue_cents,
+        total_cost_cents=r.total_cost_cents,
+        total_margin_cents=r.total_margin_cents,
+        total_margin_pct=r.total_margin_pct,
+        covered_items=r.covered_items,
+        uncovered_items=r.uncovered_items,
+    )
+
+
+@router.get("/margins/csv")
+def margins_csv(
+    date_from: Optional[datetime] = Query(default=None),
+    date_to: Optional[datetime] = Query(default=None),
+    order_by: str = Query(default="margin", pattern="^(margin|pct|revenue)$"),
+    limit: int = Query(default=1000, ge=1, le=5000),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> StreamingResponse:
+    r = reports_service.margin_by_product(
+        db,
+        date_from=date_from,
+        date_to=date_to,
+        order_by=order_by,
+        limit=limit,
+    )
+    data = [
+        [
+            row.product_name,
+            row.unit,
+            _fmt_qty(row.qty_milli, row.unit),
+            _brl(row.revenue_cents),
+            _brl(row.cost_cents),
+            _brl(row.margin_cents),
+            f"{row.margin_pct:.2f}".replace(".", ","),
+        ]
+        for row in r.rows
+    ]
+    # linha de total
+    data.append(
+        [
+            "TOTAL",
+            "",
+            "",
+            _brl(r.total_revenue_cents),
+            _brl(r.total_cost_cents),
+            _brl(r.total_margin_cents),
+            f"{r.total_margin_pct:.2f}".replace(".", ","),
+        ]
+    )
+    data.append(
+        [
+            f"Linhas sem custo (ignoradas): {r.uncovered_items}",
+            "", "", "", "", "", "",
+        ]
+    )
+    return _csv_response(
+        "margem-por-produto.csv",
+        ["Produto", "Un.", "Qtd", "Receita", "Custo", "Margem", "Margem %"],
         data,
     )

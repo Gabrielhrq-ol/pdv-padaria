@@ -1,6 +1,7 @@
 /*
   Form de login. Envia JSON para /auth/login. Em caso de sucesso,
-  redireciona para /products (cookies HttpOnly ja foram setados pelo backend).
+  redireciona para "/" - o backend decide pra onde ir baseado no papel:
+  admin -> /admin (painel), caixa -> /pdv.
 */
 
 (function () {
@@ -45,7 +46,8 @@
         return;
       }
       // Sucesso: cookie session + csrf_token ja setados; redireciona.
-      window.location.assign('/products');
+      // "/" decide no backend baseado no papel (admin -> /admin, caixa -> /pdv).
+      window.location.assign('/');
     } catch (err) {
       showError('Erro de conexao: ' + err.message);
       btn.disabled = false;

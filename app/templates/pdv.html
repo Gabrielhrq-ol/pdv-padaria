@@ -14,7 +14,9 @@
   <div class="pdv-header-right">
     <span class="sale-number">Venda <strong id="sale-number">—</strong></span>
     <span class="env-badge">{{ env }}</span>
-    <a href="/products" class="btn btn-sm">Produtos</a>
+    {% if user.role == 'admin' %}
+    <a href="/admin" class="btn btn-sm">Painel</a>
+    {% endif %}
     <a href="/caixa" class="btn btn-sm">Caixa</a>
     <button type="button" id="btn-sair" class="btn btn-sm">Sair</button>
   </div>

@@ -190,6 +190,7 @@ def add_item(
         internal_code=product.internal_code,
         unit=product.unit,
         unit_price_cents=product.price_cents,
+        unit_cost_cents=product.cost_cents,  # snapshot pra margem (Fase 11)
         qty_milli=qty_milli,
         line_total_cents=line_total_cents(product.price_cents, qty_milli),
     )

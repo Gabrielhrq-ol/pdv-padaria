@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Painel Admin - PDV Padaria{% endblock %}
+
+{% block body %}
+<header class="page-header">
+  <h1>Painel do dono</h1>
+  <div class="header-actions">
+    <span class="env-badge">{{ env }}</span>
+    <span class="user-info">
+      {{ user.name }} <small>({{ user.role }})</small>
+    </span>
+    <a href="/pdv" class="btn btn-primary">Operar caixa</a>
+    <button type="button" id="btn-sair" class="btn btn-sm">Sair</button>
+  </div>
+</header>
+
+<main class="container admin-container">
+  <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+
+  <!-- Visao geral do dia -->
+  <section class="card">
+    <h2>Hoje</h2>
+    <div class="dashboard-grid">
+      <div class="dashboard-card">
+        <span class="dash-label">Vendas finalizadas</span>
+        <strong class="dash-value" id="dash-sales-count">—</strong>
+      </div>
+      <div class="dashboard-card">
+        <span class="dash-label">Faturamento</span>
+        <strong class="dash-value" id="dash-revenue">—</strong>
+      </div>
+      <div class="dashboard-card">
+        <span class="dash-label">Ticket medio</span>
+        <strong class="dash-value" id="dash-avg">—</strong>
+      </div>
+      <div class="dashboard-card">
+        <span class="dash-label">Margem bruta</span>
+        <strong class="dash-value" id="dash-margin">—</strong>
+        <small id="dash-margin-pct"></small>
+        <small id="dash-margin-cover" class="hint"></small>
+      </div>
+    </div>
+  </section>
+
+  <!-- Alertas -->
+  <section class="card" id="alerts-card" hidden>
+    <h2>Alertas</h2>
+    <ul id="alerts-list" class="alerts-list"></ul>
+  </section>
+
+  <!-- Atalhos -->
+  <section class="card">
+    <h2>Gestao</h2>
+    <div class="shortcut-grid">
+      <a href="/admin/reports" class="shortcut">
+        <strong>Relatorios</strong>
+        <span>Faturamento, operador, forma, top produtos, descontos, margem</span>
+      </a>
+      <a href="/products" class="shortcut">
+        <strong>Produtos</strong>
+        <span>Cadastro, preco, custo, estoque minimo</span>
+      </a>
+      <a href="/admin/stock" class="shortcut">
+        <strong>Estoque</strong>
+        <span>Entrada, perda, ajuste, historico</span>
+      </a>
+      <a href="/caixa" class="shortcut">
+        <strong>Caixa</strong>
+        <span>Abrir, sangria, suprimento, fechar</span>
+      </a>
+      <a href="/admin/backup" class="shortcut">
+        <strong>Backup</strong>
+        <span>Pastas destino, rodar agora, historico</span>
+      </a>
+      <a href="/admin/printer" class="shortcut">
+        <strong>Impressora</strong>
+        <span>Backend, codepage, teste</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- Margem top 10 -->
+  <section class="card">
+    <div class="panel-head">
+      <h2>Melhores margens hoje</h2>
+      <a href="/admin/reports" class="btn btn-sm">Ver tudo</a>
+    </div>
+    <table class="table-produtos">
+      <thead>
+        <tr>
+          <th>Produto</th>
+          <th class="num">Qtd</th>
+          <th class="num">Receita</th>
+          <th class="num">Margem</th>
+          <th class="num">%</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-margins"></tbody>
+    </table>
+    <p id="margins-vazio" class="empty-state" hidden>Sem vendas com custo cadastrado hoje.</p>
+    <p id="margins-uncovered" class="hint" hidden></p>
+  </section>
+</main>
+
+<script src="/static/js/admin_dashboard.js"></script>
+{% endblock %}
