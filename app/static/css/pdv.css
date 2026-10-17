@@ -1142,3 +1142,502 @@ html, body {
 .alerts-list a:hover {
   text-decoration: underline;
 }
+
+/* =====================================================================
+   FASE 12: PDV estilo supermercado (foto Thomazini)
+   ===================================================================== */
+
+/* Overrides: body do PDV ocupa tela toda, sem scroll global */
+.pdv-market {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(180deg, #1e3a7f 0%, #0f2252 100%);
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Esconde o painel generico de .pdv-header antigo que extends inclui */
+.pdv-market .page-header,
+.pdv-market > .container { display: none; }
+
+/* --- Header --- */
+
+.pdv-header-market {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 10px 20px;
+  background: #0a1a3f;
+  border-bottom: 2px solid #2a4fb0;
+  color: #fff;
+  gap: 20px;
+}
+
+.pdv-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pdv-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 4px;
+  padding: 2px;
+}
+
+.pdv-brand {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+.pdv-brand strong { font-size: 20px; letter-spacing: 1px; }
+.pdv-brand span { font-size: 11px; opacity: 0.7; text-transform: uppercase; letter-spacing: 2px; }
+
+.pdv-header-center {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  justify-content: center;
+}
+.sale-tag {
+  font-size: 11px;
+  opacity: 0.7;
+  letter-spacing: 2px;
+}
+.pdv-header-center .sale-number {
+  font-size: 24px;
+  letter-spacing: 2px;
+  font-family: 'Courier New', monospace;
+}
+
+.pdv-header-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  font-size: 13px;
+}
+.pdv-header-right .operator strong { color: #ffd54a; }
+.pdv-header-right .env-badge {
+  background: rgba(255,255,255,0.15);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.pdv-header-right .btn {
+  background: #2a4fb0;
+  color: #fff;
+  border-color: #4a6fd0;
+}
+.pdv-header-right .btn:hover { background: #3a5fc0; }
+
+/* --- Main (2 colunas) --- */
+
+.pdv-main-market {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 2px;
+  background: transparent;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* --- Esquerda: PRODUTO atual gigante --- */
+
+.pdv-product-pane {
+  background: linear-gradient(180deg, #1e3a7f 0%, #16306b 100%);
+  padding: 24px 30px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.product-pane-label {
+  font-size: 14px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  opacity: 0.6;
+  margin-bottom: 8px;
+}
+
+.product-pane-name {
+  font-size: 72px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  margin-bottom: 32px;
+  min-height: 72px;
+  word-break: break-word;
+}
+
+.product-pane-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.4fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.product-pane-cell {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 14px 18px;
+}
+
+.product-pane-cell.product-pane-highlight {
+  background: rgba(255, 213, 74, 0.1);
+  border-color: rgba(255, 213, 74, 0.4);
+}
+
+.cell-label {
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0.6;
+  margin-bottom: 6px;
+}
+
+.cell-value {
+  font-size: 36px;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+}
+
+.product-pane-highlight .cell-value {
+  color: #ffd54a;
+  font-size: 42px;
+}
+
+.product-pane-prompt {
+  color: #ff5a66;
+  font-size: 42px;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 4px;
+  margin: 20px 0;
+  text-shadow: 0 0 20px rgba(255, 90, 102, 0.5);
+  animation: pdv-blink 1.4s ease-in-out infinite;
+}
+
+@keyframes pdv-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.pdv-code-row {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pdv-code-input {
+  width: 100%;
+  padding: 14px 18px;
+  font-size: 22px;
+  background: rgba(255,255,255,0.95);
+  border: 2px solid #ffd54a;
+  border-radius: 8px;
+  color: #0a1a3f;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 2px;
+}
+.pdv-code-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(255, 213, 74, 0.3);
+}
+
+.pdv-market .pdv-feedback {
+  color: #ffd54a;
+  font-size: 14px;
+  min-height: 18px;
+}
+.pdv-market .pdv-feedback.erro { color: #ff5a66; }
+.pdv-market .pdv-feedback.ok { color: #7cd97c; }
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0);
+  white-space: nowrap; border: 0;
+}
+
+/* --- Direita: cupom + total --- */
+
+.pdv-cupom-pane {
+  background: #fff;
+  color: #222;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.cupom-pane-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: #e9eef7;
+  border-bottom: 1px solid #cad3ec;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #0a1a3f;
+}
+
+.cupom-pane-count {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.cupom-pane-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.cupom-pane-list:focus { outline: none; }
+
+.cupom-row {
+  padding: 6px 16px;
+  cursor: pointer;
+  border-bottom: 1px dashed #e5e5e5;
+}
+
+.cupom-row:hover { background: #f6f8ff; }
+.cupom-row.selected {
+  background: #fff3b0;
+  border-left: 4px solid #ffd54a;
+  padding-left: 12px;
+}
+
+.cupom-row-top {
+  display: flex;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.cupom-row-idx {
+  color: #999;
+  min-width: 32px;
+}
+
+.cupom-row-name {
+  flex: 1;
+  color: #0a1a3f;
+}
+
+.cupom-row-bot {
+  display: flex;
+  justify-content: space-between;
+  padding-left: 40px;
+  color: #666;
+  font-size: 12px;
+}
+
+.cupom-row-total {
+  font-weight: 700;
+  color: #0a1a3f;
+  font-size: 13px;
+}
+
+.cupom-pane-empty {
+  text-align: center;
+  color: #999;
+  padding: 40px 20px;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 15px;
+}
+
+.cupom-pane-total {
+  padding: 20px 24px;
+  background: #0a1a3f;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-top: 3px solid #ffd54a;
+}
+
+.cupom-pane-total .total-label {
+  font-size: 18px;
+  letter-spacing: 3px;
+  font-weight: 600;
+}
+
+.cupom-pane-total .total-value {
+  font-size: 44px;
+  font-weight: 800;
+  color: #ff5a66;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+}
+
+/* --- Shortcuts footer --- */
+
+.pdv-shortcuts-market {
+  display: flex;
+  gap: 1px;
+  background: #0a1a3f;
+  padding: 0;
+  border-top: 2px solid #2a4fb0;
+}
+
+.pdv-shortcuts-market .shortcut-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 6px;
+  background: #16306b;
+  color: #fff;
+  border: none;
+  border-top: 3px solid transparent;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.1s;
+}
+
+.pdv-shortcuts-market .shortcut-btn:hover { background: #1e3a7f; }
+.pdv-shortcuts-market .shortcut-btn:active { background: #0f2252; }
+
+.pdv-shortcuts-market .shortcut-label {
+  font-weight: 600;
+}
+
+.pdv-shortcuts-market .shortcut-keys kbd {
+  background: rgba(255,255,255,0.15);
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-family: 'Courier New', monospace;
+  color: #ffd54a;
+  border: none;
+  box-shadow: none;
+}
+
+.pdv-shortcuts-market .shortcut-main {
+  background: #2a7f3a;
+  border-top-color: #7cd97c;
+}
+.pdv-shortcuts-market .shortcut-main:hover { background: #3a9f4a; }
+
+.pdv-shortcuts-market .shortcut-ops {
+  background: #4a3fb0;
+  border-top-color: #a099ff;
+}
+.pdv-shortcuts-market .shortcut-ops:hover { background: #5a4fc0; }
+
+.pdv-shortcuts-market .shortcut-danger {
+  background: #7f1d2a;
+  border-top-color: #ff5a66;
+}
+.pdv-shortcuts-market .shortcut-danger:hover { background: #9a2535; }
+
+/* --- Modal Operacoes --- */
+
+.modal-operacoes { max-width: 760px; width: 95vw; }
+
+.ops-status {
+  padding: 14px 18px;
+  background: #e9eef7;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.ops-status .ops-stat-label {
+  font-size: 11px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.ops-status .ops-stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0a1a3f;
+}
+
+.ops-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ops-card {
+  padding: 20px 18px;
+  background: #f6f8ff;
+  border: 1px solid #cad3ec;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.1s, transform 0.1s;
+  color: #1a3b7a;
+}
+
+.ops-card:hover {
+  background: #e9eef7;
+  transform: translateY(-1px);
+}
+
+.ops-card strong {
+  display: block;
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.ops-card span {
+  display: block;
+  font-size: 13px;
+  color: #555;
+}
+
+.ops-card.danger { background: #fff5f5; border-color: #ffb3b3; color: #7f1d2a; }
+.ops-card.danger:hover { background: #ffe5e5; }
+
+.ops-card.success { background: #f0fff0; border-color: #a0e0a0; color: #2a7f3a; }
+.ops-card.success:hover { background: #e0ffe0; }
+
+.ops-no-cash {
+  text-align: center;
+  padding: 30px 20px;
+  background: #fff5f5;
+  border-radius: 8px;
+  color: #7f1d2a;
+}
+
+.ops-form .form-row { margin-bottom: 12px; }
+.ops-form label {
+  display: block;
+  font-size: 13px;
+  color: #444;
+  margin-bottom: 4px;
+}
+.ops-form input, .ops-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #cad3ec;
+  border-radius: 4px;
+}

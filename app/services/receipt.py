@@ -1,5 +1,5 @@
 """
-Montagem do cupom como lista de linhas (texto puro, 32 colunas por padrao).
+Montagem do cupom como lista de linhas (texto puro, 48 colunas por padrao).
 
 FUNCAO PURA: nao toca em banco, nao toca em hardware. Recebe dados ja
 carregados. O chamador passa a venda, os itens, os pagamentos e o dict
@@ -7,8 +7,9 @@ de settings da padaria.
 
 Fase 4: usada pelo Dummy printer para teste.
 Fase 5: Win32Raw envia as mesmas linhas para a impressora real.
+Fase 12: largura padrao 32 -> 48 colunas (CLAUDE.md atualizado).
 
-Cupom traz "DOCUMENTO SEM VALOR FISCAL" (decisao 1 do cliente).
+Cupom traz "CUPOM NAO FISCAL - SEM VALOR FISCAL" (CLAUDE.md regra 12).
 """
 
 from __future__ import annotations
@@ -18,7 +19,8 @@ from typing import Any, Iterable, Optional
 
 from app.money import format_brl, format_qty
 
-DEFAULT_COLUMNS = 32
+DEFAULT_COLUMNS = 48
+DEFAULT_DISCLAIMER = "CUPOM NAO FISCAL - SEM VALOR FISCAL"
 
 
 def _settings_as_dict(settings_rows: Iterable[Any]) -> dict[str, str]:
@@ -111,7 +113,7 @@ def build_receipt_lines(
     store_phone = s.get("store_phone") or ""
     header_extra = s.get("receipt_header_extra") or ""
     footer = s.get("receipt_footer") or "Obrigado e volte sempre!"
-    disclaimer = s.get("receipt_disclaimer") or "DOCUMENTO SEM VALOR FISCAL"
+    disclaimer = s.get("receipt_disclaimer") or DEFAULT_DISCLAIMER
 
     lines: list[str] = []
     # ---------- cabecalho da loja ----------

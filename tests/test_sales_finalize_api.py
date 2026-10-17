@@ -90,7 +90,7 @@ class TestFinalizeEndpoint:
         assert data["printed"] is True
         assert len(data["receipt_lines"]) > 0
         joined = "\n".join(data["receipt_lines"])
-        assert "DOCUMENTO SEM VALOR FISCAL" in joined
+        assert "CUPOM NAO FISCAL - SEM VALOR FISCAL" in joined
 
     def test_cartao_excedendo_bloqueia(
         self, caixa_client: TestClient, sale_com_item, payment_methods_setting

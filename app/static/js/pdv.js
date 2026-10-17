@@ -143,18 +143,45 @@
     row.appendChild(td);
   }
 
+  function renderCurrentProduct(item) {
+    // Painel esquerdo "produto atual" (gigante).
+    // item == null => mostra "PASSE O PRODUTO"
+    const nameEl = document.getElementById('current-product-name');
+    const unitEl = document.getElementById('current-unit-price');
+    const qtyEl = document.getElementById('current-qty');
+    const totalEl = document.getElementById('current-line-total');
+    const prompt = document.getElementById('prompt-passe');
+    if (!nameEl) return;
+    if (!item) {
+      nameEl.textContent = '—';
+      unitEl.textContent = 'R$ 0,00';
+      qtyEl.textContent = '0';
+      totalEl.textContent = 'R$ 0,00';
+      if (prompt) prompt.hidden = false;
+      return;
+    }
+    nameEl.textContent = item.product_name + (item.unit && item.unit !== 'UN' ? '  ' + item.unit : '');
+    unitEl.textContent = formatCents(item.unit_price_cents);
+    qtyEl.textContent = formatQty(item.qty_milli, item.unit);
+    totalEl.textContent = formatCents(item.line_total_cents);
+    if (prompt) prompt.hidden = true;
+  }
+
   function renderSale() {
     const number = document.getElementById('sale-number');
-    const tbody = document.getElementById('pdv-tbody');
+    const list = document.getElementById('cupom-list');
     const empty = document.getElementById('pdv-empty');
     const total = document.getElementById('pdv-total');
+    const countEl = document.getElementById('cupom-count');
 
-    clearNode(tbody);
+    clearNode(list);
 
     if (!currentSale) {
       number.textContent = '—';
       total.textContent = 'R$ 0,00';
-      empty.hidden = false;
+      if (countEl) countEl.textContent = '0 itens';
+      if (empty) { list.appendChild(empty); empty.hidden = false; }
+      renderCurrentProduct(null);
       return;
     }
 
@@ -162,28 +189,63 @@
     total.textContent = formatCents(currentSale.total_cents);
 
     const items = currentSale.items || [];
+    if (countEl) countEl.textContent = items.length + (items.length === 1 ? ' item' : ' itens');
+
     if (items.length === 0) {
-      empty.hidden = false;
-    } else {
-      empty.hidden = true;
-      items.forEach((it, idx) => {
-        const tr = document.createElement('tr');
-        tr.dataset.itemId = String(it.id);
-        tr.dataset.unit = it.unit;
-        if (idx === selectedIndex) tr.classList.add('selected');
-        appendCell(tr, String(idx + 1), 'col-idx');
-        appendCell(tr, it.product_name);
-        appendCell(tr, formatQty(it.qty_milli, it.unit), 'col-qty');
-        appendCell(tr, formatCents(it.unit_price_cents), 'col-price');
-        appendCell(tr, formatCents(it.line_total_cents), 'col-total');
-        tr.addEventListener('click', () => { selectedIndex = idx; renderSale(); });
-        tbody.appendChild(tr);
-      });
+      if (empty) { list.appendChild(empty); empty.hidden = false; }
+      renderCurrentProduct(null);
+      return;
+    }
+
+    // Lista estilo mini-cupom (sem tabela)
+    items.forEach((it, idx) => {
+      const row = document.createElement('div');
+      row.className = 'cupom-row';
+      row.dataset.itemId = String(it.id);
+      row.dataset.unit = it.unit;
+      if (idx === selectedIndex) row.classList.add('selected');
+
+      const line1 = document.createElement('div');
+      line1.className = 'cupom-row-top';
+      const idxEl = document.createElement('span');
+      idxEl.className = 'cupom-row-idx';
+      idxEl.textContent = String(idx + 1).padStart(3, '0');
+      line1.appendChild(idxEl);
+      const nameEl = document.createElement('span');
+      nameEl.className = 'cupom-row-name';
+      nameEl.textContent = it.product_name;
+      line1.appendChild(nameEl);
+      row.appendChild(line1);
+
+      const line2 = document.createElement('div');
+      line2.className = 'cupom-row-bot';
+      const qtyPrice = document.createElement('span');
+      qtyPrice.className = 'cupom-row-qty';
+      qtyPrice.textContent = formatQty(it.qty_milli, it.unit) + '  x  ' + formatCents(it.unit_price_cents);
+      line2.appendChild(qtyPrice);
+      const t = document.createElement('span');
+      t.className = 'cupom-row-total';
+      t.textContent = formatCents(it.line_total_cents);
+      line2.appendChild(t);
+      row.appendChild(line2);
+
+      row.addEventListener('click', () => { selectedIndex = idx; renderSale(); });
+      list.appendChild(row);
+    });
+
+    // "Produto atual" = selecionado se tiver, senao o ultimo adicionado
+    const activeIdx = selectedIndex >= 0 && selectedIndex < items.length ? selectedIndex : items.length - 1;
+    renderCurrentProduct(items[activeIdx]);
+
+    // Scroll pro ultimo item
+    if (list.lastChild && list.lastChild.scrollIntoView) {
+      list.lastChild.scrollIntoView({ block: 'nearest' });
     }
   }
 
   function renderFavorites() {
     const box = document.getElementById('pdv-favorites');
+    if (!box) return;  // nova UI nao tem painel de favoritos
     clearNode(box);
     const favs = allProducts.filter(p => p.favorite && p.active);
     favs.forEach(p => {
@@ -615,7 +677,7 @@
     } catch (err) {
       showToast('Erro ao carregar produtos: ' + err.message, 'erro');
     }
-    renderFavorites();
+    renderFavorites();  // no-op se o container nao existir na nova UI
   }
 
   async function loadOpenSale() {
@@ -662,6 +724,13 @@
     if (ev.key === 'F8') { ev.preventDefault(); openCancelModal(); return; }
     if (ev.key === 'F9') { ev.preventDefault(); openPreco(); return; }
     if (ev.key === 'F10') { ev.preventDefault(); reprintLast(); return; }
+    if (ev.key === 'F12') {
+      ev.preventDefault();
+      if (window.PdvOperacoes && window.PdvOperacoes.open) {
+        window.PdvOperacoes.open();
+      }
+      return;
+    }
 
     // Ctrl+letra (alternativa para notebook, onde F2-F9 sao sobrepostos
     // por brilho/volume/midia). Previne o default do browser.
@@ -705,6 +774,12 @@
     if (action === 'preco') return openPreco();
     if (action === 'pagar') return openPagamento();
     if (action === 'reimprimir') return reprintLast();
+    if (action === 'operacoes') {
+      if (window.PdvOperacoes && window.PdvOperacoes.open) {
+        window.PdvOperacoes.open();
+      }
+      return;
+    }
   }
 
   document.addEventListener('DOMContentLoaded', () => {

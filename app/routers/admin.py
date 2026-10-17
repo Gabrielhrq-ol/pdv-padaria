@@ -179,21 +179,22 @@ def printer_test(
             lines=[],
         )
 
-    # Cabecalho simples que respeita 32 colunas (POS-58).
+    # Cabecalho simples em 48 colunas (CLAUDE.md regra de teste).
     now = datetime.now().strftime("%d/%m/%Y %H:%M")
+    W = 48
     lines = [
-        "PDV PADARIA".center(32),
-        "TESTE DE IMPRESSORA".center(32),
-        "-" * 32,
-        f"Operador: {user.name[:18]}",
+        "PDV PADARIA".center(W),
+        "TESTE DE IMPRESSORA".center(W),
+        "-" * W,
+        f"Operador: {user.name[:W - 10]}",
         f"Hora: {now}",
-        "-" * 32,
-        "1234567890123456789012345678901234"[:32],  # regua 1..32
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefgh"[:32],
+        "-" * W,
+        ("1234567890" * 5)[:W],  # regua
+        ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv")[:W],
         "Acentos: pao, cafe, acao, coracao",
-        "Acentos: " + "pão, café, ação, coração",
-        "-" * 32,
-        f"Backend: {printer.label()}"[:32],
+        "Acentos: pão, café, ação, coração",
+        "-" * W,
+        f"Backend: {printer.label()}"[:W],
         "",
         "",
         "",

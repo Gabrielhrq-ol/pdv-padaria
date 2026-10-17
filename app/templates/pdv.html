@@ -1,99 +1,121 @@
 {% extends "base.html" %}
 
 {% block title %}PDV - Padaria{% endblock %}
-{% block body_class %}pdv-body{% endblock %}
+{% block body_class %}pdv-body pdv-market{% endblock %}
 
 {% block body %}
-<header class="pdv-header">
+<header class="pdv-header-market">
   <div class="pdv-header-left">
-    <h1>PDV</h1>
-    <span class="user-info">
-      {{ user.name }} <small>({{ user.role }})</small>
-    </span>
+    <img src="/static/img/logo.png" alt="Logo" class="pdv-logo"
+         onerror="this.style.display='none'">
+    <div class="pdv-brand">
+      <strong>PDV</strong>
+      <span>Padaria</span>
+    </div>
+  </div>
+  <div class="pdv-header-center">
+    <span class="sale-tag">VENDA</span>
+    <strong class="sale-number" id="sale-number">—</strong>
   </div>
   <div class="pdv-header-right">
-    <span class="sale-number">Venda <strong id="sale-number">—</strong></span>
     <span class="env-badge">{{ env }}</span>
+    <span class="operator">
+      Operador: <strong>{{ user.name }}</strong>
+    </span>
     {% if user.role == 'admin' %}
     <a href="/admin" class="btn btn-sm">Painel</a>
     {% endif %}
-    <a href="/caixa" class="btn btn-sm">Caixa</a>
     <button type="button" id="btn-sair" class="btn btn-sm">Sair</button>
   </div>
 </header>
 
-<main class="pdv-main">
-  <section class="pdv-left">
+<main class="pdv-main-market">
+  <!-- COLUNA ESQUERDA: produto atual GIGANTE -->
+  <section class="pdv-product-pane">
+    <div class="product-pane-label">PRODUTO</div>
+    <div class="product-pane-name" id="current-product-name">—</div>
+
+    <div class="product-pane-grid">
+      <div class="product-pane-cell">
+        <div class="cell-label">Unitário</div>
+        <div class="cell-value" id="current-unit-price">R$ 0,00</div>
+      </div>
+      <div class="product-pane-cell">
+        <div class="cell-label">Quantidade</div>
+        <div class="cell-value" id="current-qty">0</div>
+      </div>
+      <div class="product-pane-cell product-pane-highlight">
+        <div class="cell-label">Total do item</div>
+        <div class="cell-value" id="current-line-total">R$ 0,00</div>
+      </div>
+    </div>
+
+    <div class="product-pane-prompt" id="prompt-passe">PASSE O PRODUTO</div>
+
     <div class="pdv-code-row">
-      <label for="pdv-code">Codigo:</label>
+      <label for="pdv-code" class="sr-only">Codigo</label>
       <input
         type="text"
         id="pdv-code"
+        class="pdv-code-input"
         autocomplete="off"
         inputmode="numeric"
         autofocus
         placeholder="bipe ou digite codigo (ex: 101, 7891111, 3*101)">
       <span id="pdv-feedback" class="pdv-feedback" aria-live="polite"></span>
     </div>
-
-    <div class="pdv-table-wrapper">
-      <table class="pdv-items">
-        <thead>
-          <tr>
-            <th class="col-idx">#</th>
-            <th>Produto</th>
-            <th class="col-qty">Qtd</th>
-            <th class="col-price">Preco</th>
-            <th class="col-total">Total</th>
-          </tr>
-        </thead>
-        <tbody id="pdv-tbody"></tbody>
-      </table>
-      <p id="pdv-empty" class="pdv-empty">Nenhum item. Bipe ou digite um codigo.</p>
-    </div>
   </section>
 
-  <section class="pdv-right">
-    <div class="pdv-total-box">
-      <div class="pdv-total-label">TOTAL</div>
-      <div class="pdv-total-value" id="pdv-total">R$ 0,00</div>
+  <!-- COLUNA DIREITA: cupom + TOTAL -->
+  <aside class="pdv-cupom-pane">
+    <div class="cupom-pane-head">
+      <span>Item do Cupom</span>
+      <span class="cupom-pane-count" id="cupom-count">0 itens</span>
     </div>
 
-    <div class="pdv-favorites-wrapper">
-      <h2>Favoritos</h2>
-      <div id="pdv-favorites" class="pdv-favorites"></div>
+    <div class="cupom-pane-list" id="cupom-list" tabindex="0">
+      <p class="cupom-pane-empty" id="pdv-empty">Nenhum item.<br>Bipe ou digite um codigo.</p>
     </div>
-  </section>
+
+    <div class="cupom-pane-total">
+      <div class="total-label">TOTAL</div>
+      <div class="total-value" id="pdv-total">R$ 0,00</div>
+    </div>
+  </aside>
 </main>
 
-<footer class="pdv-shortcuts">
+<footer class="pdv-shortcuts-market">
   <button type="button" class="shortcut-btn" data-action="buscar">
     <span class="shortcut-label">Buscar</span>
-    <span class="shortcut-keys"><kbd>F2</kbd> ou <kbd>Ctrl</kbd>+<kbd>B</kbd></span>
+    <span class="shortcut-keys"><kbd>F2</kbd></span>
   </button>
   <button type="button" class="shortcut-btn" data-action="qty">
     <span class="shortcut-label">Alterar qtd</span>
-    <span class="shortcut-keys"><kbd>F3</kbd> ou <kbd>Ctrl</kbd>+<kbd>Q</kbd></span>
+    <span class="shortcut-keys"><kbd>F3</kbd></span>
   </button>
   <button type="button" class="shortcut-btn" data-action="remover">
     <span class="shortcut-label">Remover</span>
-    <span class="shortcut-keys"><kbd>F4</kbd> ou <kbd>Ctrl</kbd>+<kbd>D</kbd></span>
+    <span class="shortcut-keys"><kbd>F4</kbd></span>
   </button>
-  <button type="button" class="shortcut-btn" data-action="pagar">
+  <button type="button" class="shortcut-btn shortcut-main" data-action="pagar">
     <span class="shortcut-label">Pagar</span>
     <span class="shortcut-keys"><kbd>F6</kbd></span>
   </button>
-  <button type="button" class="shortcut-btn shortcut-danger" data-action="cancelar">
-    <span class="shortcut-label">Cancelar venda</span>
-    <span class="shortcut-keys"><kbd>F8</kbd> ou <kbd>Ctrl</kbd>+<kbd>X</kbd></span>
-  </button>
   <button type="button" class="shortcut-btn" data-action="preco">
-    <span class="shortcut-label">Consultar preco</span>
-    <span class="shortcut-keys"><kbd>F9</kbd> ou <kbd>Ctrl</kbd>+<kbd>I</kbd></span>
+    <span class="shortcut-label">Preco</span>
+    <span class="shortcut-keys"><kbd>F9</kbd></span>
   </button>
   <button type="button" class="shortcut-btn" data-action="reimprimir">
     <span class="shortcut-label">Reimprimir</span>
     <span class="shortcut-keys"><kbd>F10</kbd></span>
+  </button>
+  <button type="button" class="shortcut-btn shortcut-ops" data-action="operacoes">
+    <span class="shortcut-label">&#x2699; Operacoes</span>
+    <span class="shortcut-keys"><kbd>F12</kbd></span>
+  </button>
+  <button type="button" class="shortcut-btn shortcut-danger" data-action="cancelar">
+    <span class="shortcut-label">Cancelar venda</span>
+    <span class="shortcut-keys"><kbd>F8</kbd></span>
   </button>
 </footer>
 
@@ -211,8 +233,22 @@
   </div>
 </div>
 
+<!-- Modal Operacoes (F12) -->
+<div id="modal-operacoes" class="modal" hidden aria-modal="true" role="dialog">
+  <div class="modal-content modal-operacoes">
+    <header class="modal-header">
+      <h2>&#x2699; Operacoes do caixa</h2>
+      <button type="button" class="btn-close" data-close="modal-operacoes">x</button>
+    </header>
+    <div class="modal-body" id="ops-body">
+      <!-- Preenchido pelo JS: estado atual do caixa + 4 cards de acao -->
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div id="pdv-toast" class="pdv-toast" hidden></div>
 
 <script src="/static/js/pdv.js"></script>
+<script src="/static/js/pdv_operacoes.js"></script>
 {% endblock %}

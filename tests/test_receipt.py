@@ -43,8 +43,8 @@ SETTINGS = {
     "store_address": "Rua Teste 123",
     "store_phone": "(16) 0000-0000",
     "receipt_footer": "Obrigado!",
-    "receipt_disclaimer": "DOCUMENTO SEM VALOR FISCAL",
-    "receipt_columns": "32",
+    "receipt_disclaimer": "CUPOM NAO FISCAL - SEM VALOR FISCAL",
+    "receipt_columns": "48",
 }
 
 
@@ -64,7 +64,7 @@ class TestEstruturaBasica:
             FakeSale(), [], [], SETTINGS,
         )
         joined = "\n".join(lines)
-        assert "DOCUMENTO SEM VALOR FISCAL" in joined
+        assert "CUPOM NAO FISCAL - SEM VALOR FISCAL" in joined
 
     def test_cnpj_endereco_rodape(self) -> None:
         lines = build_receipt_lines(
@@ -75,17 +75,34 @@ class TestEstruturaBasica:
         assert "Rua Teste 123" in joined
         assert "Obrigado!" in joined
 
-    def test_nenhuma_linha_passa_32_colunas(self) -> None:
+    def test_nenhuma_linha_passa_48_colunas(self) -> None:
         lines = build_receipt_lines(
             FakeSale(subtotal_cents=1500, total_cents=1500),
             [
-                FakeItem("Produto com nome relativamente comprido para testar quebra", "UN", 500, 3000, 1500),
+                FakeItem("Produto com nome relativamente comprido para testar quebra em cupom maior", "UN", 500, 3000, 1500),
             ],
             [FakePayment("dinheiro", 1500)],
             SETTINGS,
         )
         for ln in lines:
-            assert len(ln) <= 32, f"Linha com {len(ln)} chars: {ln!r}"
+            assert len(ln) <= 48, f"Linha com {len(ln)} chars: {ln!r}"
+
+    def test_default_48_colunas_sem_setting(self) -> None:
+        """Sem receipt_columns no settings, usa o default 48."""
+        settings_min = {
+            "store_name": "Padaria X",
+        }
+        lines = build_receipt_lines(
+            FakeSale(subtotal_cents=100, total_cents=100),
+            [FakeItem("Pao", "UN", 100, 1000, 100)],
+            [FakePayment("dinheiro", 100)],
+            settings_min,
+        )
+        for ln in lines:
+            assert len(ln) <= 48, f"{len(ln)}: {ln!r}"
+        # disclaimer default novo
+        joined = "\n".join(lines)
+        assert "CUPOM NAO FISCAL - SEM VALOR FISCAL" in joined
 
 
 class TestItens:
