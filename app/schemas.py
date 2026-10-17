@@ -663,3 +663,49 @@ class BackupHistoryEntry(StrictBase):
     user_name: Optional[str]
     action: str  # "backup_run" | "backup_skipped" | "backup_failed"
     details: Optional[str]
+
+
+# ---------- User management (Fase 13) ----------
+
+UsernameStrFase13 = Annotated[
+    str,
+    StringConstraints(min_length=3, max_length=50, pattern=r"^[A-Za-z0-9._-]+$"),
+]
+UserNameStr = Annotated[
+    str,
+    StringConstraints(min_length=2, max_length=120, strip_whitespace=True),
+]
+PasswordStr = Annotated[
+    str,
+    StringConstraints(min_length=8, max_length=200),
+]
+
+
+class UserManageOut(StrictBase):
+    id: int
+    name: str
+    username: str
+    role: Role
+    active: bool
+    created_at: datetime
+    last_login_at: Optional[datetime] = None
+
+
+class UserCreateIn(StrictBase):
+    name: UserNameStr
+    username: UsernameStrFase13
+    password: PasswordStr
+    role: Role
+
+
+class UserUpdateIn(StrictBase):
+    name: Optional[UserNameStr] = None
+    role: Optional[Role] = None
+
+
+class UserChangePasswordIn(StrictBase):
+    new_password: PasswordStr
+
+
+class UserToggleActiveIn(StrictBase):
+    active: bool

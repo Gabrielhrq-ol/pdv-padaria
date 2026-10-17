@@ -39,6 +39,7 @@ from app.routers import cash as cash_router
 from app.routers import products as products_router
 from app.routers import reports as reports_router
 from app.routers import sales as sales_router
+from app.routers import users as users_router
 
 # ---------- logging interno ----------
 
@@ -318,6 +319,25 @@ async def admin_reports_page(
     )
 
 
+@app.get("/admin/usuarios", include_in_schema=False, response_model=None)
+async def admin_usuarios_page(
+    request: Request,
+    user: User | None = Depends(get_optional_user),
+) -> HTMLResponse | RedirectResponse:
+    if user is None:
+        return RedirectResponse(url="/login", status_code=302)
+    if user.role != "admin":
+        return RedirectResponse(url="/pdv", status_code=302)
+    return templates.TemplateResponse(
+        request=request,
+        name="admin_usuarios.html",
+        context={
+            "env": settings.ENVIRONMENT,
+            "user": {"name": user.name, "username": user.username, "role": user.role},
+        },
+    )
+
+
 @app.get("/admin/backup", include_in_schema=False, response_model=None)
 async def admin_backup_page(
     request: Request,
@@ -352,3 +372,4 @@ app.include_router(cash_router.router)
 app.include_router(cash_router.admin_router)
 app.include_router(reports_router.router)
 app.include_router(backup_router.router)
+app.include_router(users_router.router)

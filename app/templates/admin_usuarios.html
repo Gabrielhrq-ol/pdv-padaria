@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Usuarios - PDV Padaria{% endblock %}
+
+{% block body %}
+<header class="page-header">
+  <h1>Gestao de usuarios</h1>
+  <div class="header-actions">
+    <span class="env-badge">{{ env }}</span>
+    <span class="user-info">
+      {{ user.name }} <small>({{ user.role }})</small>
+    </span>
+    <a href="/admin" class="btn btn-sm">Painel</a>
+    <button type="button" id="btn-sair" class="btn btn-sm">Sair</button>
+  </div>
+</header>
+
+<main class="container admin-container">
+  <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+
+  <section class="card">
+    <div class="panel-head">
+      <h2>Usuarios cadastrados</h2>
+      <button type="button" id="btn-novo" class="btn btn-primary">+ Novo usuario</button>
+    </div>
+    <p class="hint">
+      Usuarios nunca sao apagados - apenas desativados. Admin nao pode
+      desativar a si mesmo (evita trancar fora do sistema).
+    </p>
+
+    <table class="table-produtos">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Username</th>
+          <th>Papel</th>
+          <th>Status</th>
+          <th>Ultimo login</th>
+          <th class="actions">Acoes</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-users"></tbody>
+    </table>
+    <p id="users-vazio" class="empty-state" hidden>Nenhum usuario cadastrado.</p>
+  </section>
+</main>
+
+<!-- Modal: Novo / Editar -->
+<div id="modal-user" class="modal" hidden aria-modal="true" role="dialog">
+  <div class="modal-content">
+    <header class="modal-header">
+      <h2 id="user-modal-title">Novo usuario</h2>
+      <button type="button" class="btn-close" data-close="modal-user">x</button>
+    </header>
+    <form id="form-user" novalidate>
+      <input type="hidden" id="user-id">
+      <div class="form-row">
+        <label for="user-name">Nome *</label>
+        <input type="text" id="user-name" required maxlength="120" minlength="2">
+      </div>
+      <div class="form-row">
+        <label for="user-username">Username *</label>
+        <input type="text" id="user-username" required maxlength="50" minlength="3"
+               pattern="[A-Za-z0-9._-]+"
+               placeholder="letras, numeros, . _ -">
+      </div>
+      <div class="form-row">
+        <label for="user-role">Papel *</label>
+        <select id="user-role" required>
+          <option value="caixa">Caixa (vende, abre/fecha caixa)</option>
+          <option value="admin">Admin (tudo)</option>
+        </select>
+      </div>
+      <div class="form-row" id="row-password-create">
+        <label for="user-password">Senha * (8+ chars, 1 letra, 1 numero)</label>
+        <input type="password" id="user-password" minlength="8" maxlength="200" autocomplete="new-password">
+      </div>
+      <div class="erro-form" id="user-erro" hidden></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close="modal-user">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Trocar senha -->
+<div id="modal-pwd" class="modal" hidden aria-modal="true" role="dialog">
+  <div class="modal-content">
+    <header class="modal-header">
+      <h2>Trocar senha</h2>
+      <button type="button" class="btn-close" data-close="modal-pwd">x</button>
+    </header>
+    <form id="form-pwd" novalidate>
+      <input type="hidden" id="pwd-user-id">
+      <p>Trocar a senha de <strong id="pwd-user-name"></strong></p>
+      <div class="form-row">
+        <label for="pwd-new">Nova senha * (8+ chars, 1 letra, 1 numero)</label>
+        <input type="password" id="pwd-new" required minlength="8" maxlength="200" autocomplete="new-password">
+      </div>
+      <p class="hint">Troca de senha reseta tentativas de login erradas e desbloqueia a conta.</p>
+      <div class="erro-form" id="pwd-erro" hidden></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close="modal-pwd">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Trocar senha</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/static/js/admin_usuarios.js"></script>
+{% endblock %}
