@@ -244,8 +244,38 @@
   }
 
   function renderFavorites() {
+    // Fase 14: barra de favoritos no painel esquerdo do PDV.
+    const bar = document.getElementById('pdv-favorites-bar');
+    if (bar) {
+      clearNode(bar);
+      const favs = allProducts.filter(p => p.favorite && p.active).slice(0, 12);
+      favs.forEach((p, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'fav-btn-market';
+        btn.dataset.productId = String(p.id);
+        btn.title = p.name + ' - ' + formatCents(p.price_cents) + '/' + p.unit;
+        if (idx < 9) {
+          const kbd = document.createElement('span');
+          kbd.className = 'fav-btn-shortcut';
+          kbd.textContent = 'Ctrl+' + (idx + 1);
+          btn.appendChild(kbd);
+        }
+        const nameEl = document.createElement('div');
+        nameEl.className = 'fav-btn-name';
+        nameEl.textContent = p.name;
+        btn.appendChild(nameEl);
+        const priceEl = document.createElement('div');
+        priceEl.className = 'fav-btn-price';
+        priceEl.textContent = formatCents(p.price_cents) + ' / ' + p.unit;
+        btn.appendChild(priceEl);
+        btn.addEventListener('click', () => addFavorite(p));
+        bar.appendChild(btn);
+      });
+    }
+    // Legado: suporta UI antiga se por acaso o container estiver no DOM.
     const box = document.getElementById('pdv-favorites');
-    if (!box) return;  // nova UI nao tem painel de favoritos
+    if (!box) return;
     clearNode(box);
     const favs = allProducts.filter(p => p.favorite && p.active);
     favs.forEach(p => {
@@ -325,7 +355,9 @@
   }
 
   function highlightLast() {
-    const rows = document.querySelectorAll('#pdv-tbody tr');
+    // UI nova (Fase 12): lista no .cupom-row. Legado: #pdv-tbody tr.
+    let rows = document.querySelectorAll('#cupom-list .cupom-row');
+    if (!rows.length) rows = document.querySelectorAll('#pdv-tbody tr');
     if (!rows.length) return;
     const last = rows[rows.length - 1];
     last.classList.add('highlight-new');
@@ -747,6 +779,16 @@
         }
       }
       if (k === 'i') { ev.preventDefault(); openPreco(); return; }
+      // Ctrl+1..9 → favorito N (Fase 14)
+      if (/^[1-9]$/.test(k)) {
+        const idx = parseInt(k, 10) - 1;
+        const favs = allProducts.filter(p => p.favorite && p.active);
+        if (idx < favs.length) {
+          ev.preventDefault();
+          addFavorite(favs[idx]);
+        }
+        return;
+      }
     }
     // Navegacao com setas na lista
     if ((ev.key === 'ArrowUp' || ev.key === 'ArrowDown') && currentSale && currentSale.items.length) {

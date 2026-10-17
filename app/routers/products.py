@@ -107,6 +107,26 @@ def search_products(
     return list(db.execute(stmt).scalars())
 
 
+@router.get("/favorites", response_model=list[ProductOut])
+def list_favorites(
+    limit: int = Query(default=12, ge=1, le=50),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_authenticated),
+) -> list[Product]:
+    """
+    Produtos marcados como favoritos (admin marca em /products com o
+    checkbox 'Favorito'). Ativos apenas. Ordenados por nome.
+    Usado pelo PDV pra montar a barra de atalhos (Fase 14).
+    """
+    stmt = (
+        select(Product)
+        .where(Product.favorite.is_(True), Product.active.is_(True))
+        .order_by(Product.name)
+        .limit(limit)
+    )
+    return list(db.execute(stmt).scalars())
+
+
 @router.get("/by-code/{code}", response_model=ByCodeResult)
 def product_by_code(
     code: str,

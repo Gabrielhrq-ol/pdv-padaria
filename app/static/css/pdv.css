@@ -1365,6 +1365,63 @@ html, body {
 .pdv-market .pdv-feedback.erro { color: #ff5a66; }
 .pdv-market .pdv-feedback.ok { color: #7cd97c; }
 
+/* Fase 14: barra de favoritos no PDV */
+.pdv-favorites-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.pdv-favorites-bar:empty { display: none; }
+
+.fav-btn-market {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,213,74,0.3);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s, transform 0.1s;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 56px;
+  position: relative;
+}
+.fav-btn-market:hover {
+  background: rgba(255,213,74,0.15);
+  border-color: #ffd54a;
+  transform: translateY(-1px);
+}
+.fav-btn-market:active { transform: translateY(0); }
+
+.fav-btn-shortcut {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 10px;
+  background: rgba(0,0,0,0.3);
+  color: #ffd54a;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+}
+
+.fav-btn-name {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+  padding-right: 28px;
+}
+.fav-btn-price {
+  font-size: 13px;
+  color: #ffd54a;
+  font-family: 'Courier New', monospace;
+}
+
 .sr-only {
   position: absolute;
   width: 1px; height: 1px;
