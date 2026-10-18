@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Historico de vendas - PDV Padaria{% endblock %}
+
+{% block body %}
+<header class="page-header">
+  <h1>Historico de vendas</h1>
+  <div class="header-actions">
+    <span class="env-badge">{{ env }}</span>
+    <span class="user-info">
+      {{ user.name }} <small>({{ user.role }})</small>
+    </span>
+    <a href="/admin" class="btn btn-sm">Painel</a>
+    <a href="/admin/reports" class="btn btn-sm">Relatorios</a>
+    <button type="button" id="btn-sair" class="btn btn-sm">Sair</button>
+  </div>
+</header>
+
+<main class="container admin-container">
+  <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+
+  <section class="card">
+    <h2>Filtros</h2>
+    <form id="form-filtros" class="filtros-historico">
+      <div class="form-row">
+        <label for="filtro-numero">Numero da venda</label>
+        <input type="number" id="filtro-numero" min="1" placeholder="ex: 42">
+      </div>
+      <div class="form-row">
+        <label for="filtro-de">De</label>
+        <input type="date" id="filtro-de">
+      </div>
+      <div class="form-row">
+        <label for="filtro-ate">Ate</label>
+        <input type="date" id="filtro-ate">
+      </div>
+      <div class="form-row">
+        <label for="filtro-status">Status</label>
+        <select id="filtro-status">
+          <option value="">Todos</option>
+          <option value="completed">Finalizadas</option>
+          <option value="cancelled">Canceladas</option>
+          <option value="open">Em aberto</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="filtro-user">Operador</label>
+        <select id="filtro-user">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div class="form-row form-row-actions">
+        <button type="submit" class="btn btn-primary">Aplicar</button>
+        <button type="button" id="btn-limpar" class="btn">Limpar</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="panel-head">
+      <h2>Vendas</h2>
+      <div class="pager">
+        <button type="button" id="btn-prev" class="btn btn-sm">&lt; Anterior</button>
+        <span id="pager-info">—</span>
+        <button type="button" id="btn-next" class="btn btn-sm">Proxima &gt;</button>
+      </div>
+    </div>
+    <table class="table-produtos">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Data</th>
+          <th>Operador</th>
+          <th>Status</th>
+          <th class="num">Itens</th>
+          <th class="num">Total</th>
+          <th class="actions">Acoes</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-vendas"></tbody>
+    </table>
+    <p id="vendas-vazio" class="empty-state" hidden>Nenhuma venda encontrada.</p>
+  </section>
+</main>
+
+<!-- Modal detalhe da venda -->
+<div id="modal-sale" class="modal" hidden aria-modal="true" role="dialog">
+  <div class="modal-content" style="max-width:720px;">
+    <header class="modal-header">
+      <h2>Venda <span id="sale-num">—</span></h2>
+      <button type="button" class="btn-close" data-close="modal-sale">x</button>
+    </header>
+    <div class="modal-body" id="sale-detail-body">
+      <!-- renderizado via JS -->
+    </div>
+  </div>
+</div>
+
+<!-- Modal estorno -->
+<div id="modal-reverse" class="modal" hidden aria-modal="true" role="dialog">
+  <div class="modal-content">
+    <header class="modal-header">
+      <h2>Estornar venda</h2>
+      <button type="button" class="btn-close" data-close="modal-reverse">x</button>
+    </header>
+    <form id="form-reverse">
+      <input type="hidden" id="reverse-sale-id">
+      <p>Esta acao <strong>devolve os itens ao estoque</strong> e marca a venda como cancelada. Nao pode ser desfeita.</p>
+      <div class="form-row">
+        <label for="reverse-reason">Motivo (obrigatorio) *</label>
+        <textarea id="reverse-reason" required maxlength="200" rows="2"
+                  placeholder="Ex: cliente devolveu, erro na cobranca"></textarea>
+      </div>
+      <div class="erro-form" id="reverse-erro" hidden></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close="modal-reverse">Voltar</button>
+        <button type="submit" class="btn btn-danger">Confirmar estorno</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/static/js/admin_vendas.js"></script>
+{% endblock %}

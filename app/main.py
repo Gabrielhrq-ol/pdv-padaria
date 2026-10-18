@@ -319,6 +319,25 @@ async def admin_reports_page(
     )
 
 
+@app.get("/admin/vendas", include_in_schema=False, response_model=None)
+async def admin_vendas_page(
+    request: Request,
+    user: User | None = Depends(get_optional_user),
+) -> HTMLResponse | RedirectResponse:
+    if user is None:
+        return RedirectResponse(url="/login", status_code=302)
+    if user.role != "admin":
+        return RedirectResponse(url="/pdv", status_code=302)
+    return templates.TemplateResponse(
+        request=request,
+        name="admin_vendas.html",
+        context={
+            "env": settings.ENVIRONMENT,
+            "user": {"name": user.name, "username": user.username, "role": user.role},
+        },
+    )
+
+
 @app.get("/admin/usuarios", include_in_schema=False, response_model=None)
 async def admin_usuarios_page(
     request: Request,

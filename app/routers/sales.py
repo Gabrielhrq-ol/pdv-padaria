@@ -17,15 +17,16 @@ Audit log registra: sale_opened, sale_item_added/changed/removed, sale_cancelled
 
 from __future__ import annotations
 
-from typing import Optional
+from datetime import datetime
+from typing import Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 
 from sqlalchemy import select
 
 from app.db import get_db
-from app.dependencies import require_authenticated, require_csrf
+from app.dependencies import require_admin, require_authenticated, require_csrf
 from app.models import AuditLog, Product, Sale, SaleItem, Setting, User
 from app.schemas import (
     FinalizeRequest,
@@ -87,6 +88,43 @@ def get_open(
 ) -> Optional[Sale]:
     """Retorna a venda em aberto do operador atual (ou null)."""
     return sales_service.get_open_sale(db, user.id)
+
+
+# ---------- Historico de vendas (Fase 15, admin only) ----------
+
+
+@router.get("", response_model=list[SaleOut])
+def list_sales(
+    date_from: Optional[datetime] = Query(default=None),
+    date_to: Optional[datetime] = Query(default=None),
+    status: Optional[Literal["open", "completed", "cancelled"]] = Query(default=None),
+    user_id: Optional[int] = Query(default=None, ge=1),
+    number: Optional[int] = Query(default=None, ge=1),
+    limit: int = Query(default=50, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> list[Sale]:
+    """
+    Lista vendas com filtros (admin only). Serve a tela /admin/vendas.
+    Ordem: numero decrescente (venda mais recente primeiro).
+    """
+    stmt = select(Sale)
+    if number is not None:
+        # busca por numero exato — ignora os outros filtros
+        stmt = stmt.where(Sale.number == number)
+    else:
+        if status is not None:
+            stmt = stmt.where(Sale.status == status)
+        if user_id is not None:
+            stmt = stmt.where(Sale.user_id == user_id)
+        if date_from is not None:
+            # usa finalized_at pra completed/cancelled, created_at pra open
+            stmt = stmt.where(Sale.created_at >= date_from)
+        if date_to is not None:
+            stmt = stmt.where(Sale.created_at <= date_to)
+    stmt = stmt.order_by(Sale.number.desc()).limit(limit).offset(offset)
+    return list(db.execute(stmt).scalars())
 
 
 @router.post(
