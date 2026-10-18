@@ -232,31 +232,72 @@
         onclick: () => showForm('sangria'),
       }, [
         el('strong', null, ['Sangria']),
-        el('span', null, ['Retirar dinheiro (motivo obrigatorio)']),
+        el('span', null, ['Retirar dinheiro']),
       ]),
       el('div', {
         className: 'ops-card success',
         onclick: () => showForm('suprimento'),
       }, [
         el('strong', null, ['Suprimento']),
-        el('span', null, ['Colocar troco (motivo opcional)']),
+        el('span', null, ['Colocar troco']),
       ]),
       el('div', {
         className: 'ops-card danger',
         onclick: () => showForm('fechar'),
       }, [
         el('strong', null, ['Fechar caixa']),
-        el('span', null, ['Fim do dia. Vendas abertas devem estar finalizadas.']),
+        el('span', null, ['Fim do dia']),
       ]),
       el('div', {
         className: 'ops-card',
         onclick: () => render(),
       }, [
-        el('strong', null, ['Atualizar resumo']),
-        el('span', null, ['Recarrega os totais do caixa']),
+        el('strong', null, ['Atualizar']),
+        el('span', null, ['Recarregar resumo']),
       ]),
     ]);
     body.appendChild(grid);
+
+    // Fase 19: cards de acoes da venda (F4/F8/F9/F10) tambem aqui.
+    body.appendChild(el('h3', { style: 'margin-top:18px' }, ['Venda atual']));
+    const grid2 = el('div', { className: 'ops-grid' }, [
+      el('div', {
+        className: 'ops-card',
+        onclick: () => triggerVendaAction('remover'),
+      }, [
+        el('strong', null, ['Remover item (F4)']),
+        el('span', null, ['Tira o item selecionado']),
+      ]),
+      el('div', {
+        className: 'ops-card',
+        onclick: () => triggerVendaAction('preco'),
+      }, [
+        el('strong', null, ['Consultar preço (F9)']),
+        el('span', null, ['Sem adicionar à venda']),
+      ]),
+      el('div', {
+        className: 'ops-card',
+        onclick: () => triggerVendaAction('reimprimir'),
+      }, [
+        el('strong', null, ['Reimprimir (F10)']),
+        el('span', null, ['2ª via da última venda']),
+      ]),
+      el('div', {
+        className: 'ops-card danger',
+        onclick: () => triggerVendaAction('cancelar'),
+      }, [
+        el('strong', null, ['Cancelar venda (F8)']),
+        el('span', null, ['Com motivo obrigatório']),
+      ]),
+    ]);
+    body.appendChild(grid2);
+  }
+
+  function triggerVendaAction(action) {
+    closeModal();
+    // Delega pro handler de atalhos do pdv.js (botao oculto com data-action)
+    const btn = document.querySelector(`[data-action="${action}"]`);
+    if (btn) btn.click();
   }
 
   // --- formularios inline (abrem no lugar dos cards) ---

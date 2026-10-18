@@ -145,19 +145,21 @@
 
   function renderCurrentProduct(item) {
     // Painel esquerdo "produto atual" (gigante).
-    // item == null => mostra "PASSE O PRODUTO"
+    // item == null => mostra "pode passar o produto" e esconde celulas zeradas
     const nameEl = document.getElementById('current-product-name');
     const unitEl = document.getElementById('current-unit-price');
     const qtyEl = document.getElementById('current-qty');
     const totalEl = document.getElementById('current-line-total');
     const prompt = document.getElementById('prompt-passe');
+    const pane = document.querySelector('.pdv-product-pane');
     if (!nameEl) return;
     if (!item) {
-      nameEl.textContent = '—';
-      unitEl.textContent = 'R$ 0,00';
-      qtyEl.textContent = '0';
-      totalEl.textContent = 'R$ 0,00';
+      nameEl.textContent = '';
+      unitEl.textContent = '';
+      qtyEl.textContent = '';
+      totalEl.textContent = '';
       if (prompt) prompt.hidden = false;
+      if (pane) pane.classList.add('pdv-pane-idle');
       return;
     }
     nameEl.textContent = item.product_name + (item.unit && item.unit !== 'UN' ? '  ' + item.unit : '');
@@ -165,6 +167,7 @@
     qtyEl.textContent = formatQty(item.qty_milli, item.unit);
     totalEl.textContent = formatCents(item.line_total_cents);
     if (prompt) prompt.hidden = true;
+    if (pane) pane.classList.remove('pdv-pane-idle');
   }
 
   function renderSale() {
@@ -831,8 +834,8 @@
     if (btnSair) btnSair.addEventListener('click', doLogout);
     document.addEventListener('keydown', handleGlobalKey);
 
-    // Botoes do rodape (notebook-friendly)
-    document.querySelectorAll('.shortcut-btn').forEach(btn => {
+    // Botoes do rodape (notebook-friendly) + Fase 19 botoes ocultos
+    document.querySelectorAll('.shortcut-btn, .shortcut-btn-hidden').forEach(btn => {
       btn.addEventListener('click', handleShortcutClick);
     });
 

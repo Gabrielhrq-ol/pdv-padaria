@@ -1892,10 +1892,16 @@ html, body {
   text-align: center;
 }
 
-.login-logo {
-  width: 72px;
-  height: 72px;
-  margin-bottom: 10px;
+.login-logo,
+.login-logo-img {
+  width: 220px;
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 14px;
+  background: #0e0e14;
+  padding: 14px 18px;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
 }
 
 .login-card-v2 h1 {
@@ -1969,6 +1975,104 @@ html, body {
 }
 .btn-login:hover { background: var(--pao-dark); }
 .btn-login:active { transform: translateY(1px); }
+
+/* =====================================================================
+   FASE 19: PDV mais limpo + logo real
+   ===================================================================== */
+
+/* Logo real (SVG) na home - container escuro porque a logo tem texto branco */
+.home-logo-img {
+  width: 320px;
+  max-width: 100%;
+  height: auto;
+  background: #0e0e14;
+  padding: 20px 24px;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  margin-bottom: 16px;
+}
+
+/* Logo real no PDV */
+.pdv-logo-img {
+  height: 44px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Header do PDV mais limpo (remove badges e textos secundarios) */
+.pdv-header-clean {
+  padding: 8px 18px;
+  min-height: 56px;
+}
+
+.pdv-header-clean .env-badge,
+.pdv-header-clean .sale-tag,
+.pdv-header-clean .pdv-brand,
+.pdv-header-clean .operator-label,
+.pdv-header-clean .operator .operator-label {
+  display: none;
+}
+
+.pdv-header-clean .pdv-logo-svg,
+.pdv-header-clean .pdv-logo-img {
+  height: 44px;
+  width: auto;
+}
+
+.pdv-header-clean .pdv-header-center .sale-number {
+  font-size: 20px;
+  color: var(--pao-light);
+  letter-spacing: 1px;
+}
+
+/* Barra inferior mais clean */
+.pdv-shortcuts-clean .shortcut-btn {
+  padding: 14px 10px;
+  font-size: 14px;
+}
+
+.pdv-shortcuts-clean .shortcut-label {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.pdv-shortcuts-clean .shortcut-keys kbd {
+  font-size: 11px;
+  padding: 2px 7px;
+}
+
+/* Botao oculto - zero area visual mas clicavel via .click() do JS */
+.shortcut-btn-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: none;
+  clip: rect(0,0,0,0);
+}
+
+/* Modo ocioso do PDV: esconde label PRODUTO + 3 celulas zeradas,
+   deixa so o CTA "pode passar" em destaque + input de codigo.
+   Fica MUITO mais limpo quando nao ha venda em andamento. */
+.pdv-pane-idle .product-pane-label,
+.pdv-pane-idle .product-pane-name,
+.pdv-pane-idle .product-pane-grid {
+  display: none;
+}
+
+.pdv-pane-idle .product-pane-prompt {
+  font-size: 48px;
+  margin-top: 20vh;
+}
+
+.pdv-pane-idle .pdv-code-row {
+  margin-top: auto;
+}
 
 .login-footer-v2 {
   margin-top: 20px;

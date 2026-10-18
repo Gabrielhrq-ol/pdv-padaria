@@ -10,27 +10,17 @@
 {% endblock %}
 
 {% block body %}
-<header class="pdv-header-market">
+<header class="pdv-header-market pdv-header-clean">
   <a href="/" class="pdv-header-left" title="Voltar">
-    <svg class="pdv-logo-svg" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="30" cy="36" rx="24" ry="17" fill="#d4a574" stroke="#5d3a1a" stroke-width="1.5"/>
-      <path d="M 11 34 Q 17 25 23 34 Q 29 25 35 34 Q 41 25 47 34" fill="none" stroke="#5d3a1a" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>
-    <div class="pdv-brand">
-      <strong>Padaria</strong>
-      <span>frente de caixa</span>
-    </div>
+    <img src="/static/img/logo.svg" alt="Mercado Thomazini" class="pdv-logo-img">
   </a>
   <div class="pdv-header-center">
-    <span class="sale-tag">venda</span>
     <strong class="sale-number" id="sale-number">—</strong>
   </div>
   <div class="pdv-header-right">
-    <!-- Fase 18: dropdown de operador (sem senha) -->
     <div class="operator-selector">
       <button type="button" id="btn-operator" class="operator-btn" aria-haspopup="true">
-        <span class="operator-label">Operador</span>
-        <strong id="operator-name">Trocar</strong>
+        <strong id="operator-name">Trocar operador</strong>
         <span class="operator-caret">&#9662;</span>
       </button>
       <div id="operator-menu" class="operator-menu" hidden role="menu"></div>
@@ -101,39 +91,28 @@
   </aside>
 </main>
 
-<footer class="pdv-shortcuts-market">
+<footer class="pdv-shortcuts-market pdv-shortcuts-clean">
   <button type="button" class="shortcut-btn" data-action="buscar">
     <span class="shortcut-label">Buscar</span>
     <span class="shortcut-keys"><kbd>F2</kbd></span>
   </button>
   <button type="button" class="shortcut-btn" data-action="qty">
-    <span class="shortcut-label">Alterar qtd</span>
+    <span class="shortcut-label">Quantidade</span>
     <span class="shortcut-keys"><kbd>F3</kbd></span>
-  </button>
-  <button type="button" class="shortcut-btn" data-action="remover">
-    <span class="shortcut-label">Remover</span>
-    <span class="shortcut-keys"><kbd>F4</kbd></span>
   </button>
   <button type="button" class="shortcut-btn shortcut-main" data-action="pagar">
     <span class="shortcut-label">Pagar</span>
     <span class="shortcut-keys"><kbd>F6</kbd></span>
   </button>
-  <button type="button" class="shortcut-btn" data-action="preco">
-    <span class="shortcut-label">Preco</span>
-    <span class="shortcut-keys"><kbd>F9</kbd></span>
-  </button>
-  <button type="button" class="shortcut-btn" data-action="reimprimir">
-    <span class="shortcut-label">Reimprimir</span>
-    <span class="shortcut-keys"><kbd>F10</kbd></span>
-  </button>
   <button type="button" class="shortcut-btn shortcut-ops" data-action="operacoes">
-    <span class="shortcut-label">&#x2699; Operacoes</span>
+    <span class="shortcut-label">Mais</span>
     <span class="shortcut-keys"><kbd>F12</kbd></span>
   </button>
-  <button type="button" class="shortcut-btn shortcut-danger" data-action="cancelar">
-    <span class="shortcut-label">Cancelar venda</span>
-    <span class="shortcut-keys"><kbd>F8</kbd></span>
-  </button>
+  <!-- Botoes secundarios ficam escondidos no menu "Mais" / F12 -->
+  <button type="button" class="shortcut-btn-hidden" data-action="remover" aria-hidden="true"></button>
+  <button type="button" class="shortcut-btn-hidden" data-action="preco" aria-hidden="true"></button>
+  <button type="button" class="shortcut-btn-hidden" data-action="reimprimir" aria-hidden="true"></button>
+  <button type="button" class="shortcut-btn-hidden" data-action="cancelar" aria-hidden="true"></button>
 </footer>
 
 <!-- Modal de busca por nome (F2) -->
