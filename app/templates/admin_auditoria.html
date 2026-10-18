@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Auditoria - PDV Padaria{% endblock %}
+
+{% block body %}
+<header class="page-header">
+  <h1>Auditoria do sistema</h1>
+  <div class="header-actions">
+    <span class="env-badge">{{ env }}</span>
+    <span class="user-info">
+      {{ user.name }} <small>({{ user.role }})</small>
+    </span>
+    <a href="/admin" class="btn btn-sm">Painel</a>
+    <button type="button" id="btn-sair" class="btn btn-sm">Sair</button>
+  </div>
+</header>
+
+<main class="container admin-container">
+  <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+
+  <section class="card">
+    <h2>Filtros</h2>
+    <p class="hint">
+      Toda acao sensivel do sistema (login, estorno de venda, ajuste de
+      estoque, abertura/fechamento de caixa, troca de senha, backup, etc)
+      e registrada. Use pra investigar incidentes.
+    </p>
+    <form id="form-filtros" class="filtros-historico">
+      <div class="form-row">
+        <label for="filtro-action">Acao</label>
+        <select id="filtro-action">
+          <option value="">Todas</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="filtro-user">Usuario</label>
+        <select id="filtro-user">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="filtro-entity">Entidade</label>
+        <select id="filtro-entity">
+          <option value="">Todas</option>
+          <option value="product">Produto</option>
+          <option value="user">Usuario</option>
+          <option value="sale">Venda</option>
+          <option value="cash_session">Caixa</option>
+          <option value="setting">Setting</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="filtro-de">De</label>
+        <input type="date" id="filtro-de">
+      </div>
+      <div class="form-row">
+        <label for="filtro-ate">Ate</label>
+        <input type="date" id="filtro-ate">
+      </div>
+      <div class="form-row form-row-actions">
+        <button type="submit" class="btn btn-primary">Aplicar</button>
+        <button type="button" id="btn-limpar" class="btn">Limpar</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="panel-head">
+      <h2>Eventos</h2>
+      <div class="pager">
+        <button type="button" id="btn-prev" class="btn btn-sm">&lt; Anterior</button>
+        <span id="pager-info">—</span>
+        <button type="button" id="btn-next" class="btn btn-sm">Proxima &gt;</button>
+      </div>
+    </div>
+    <table class="table-produtos">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Usuario</th>
+          <th>Acao</th>
+          <th>Entidade</th>
+          <th>ID</th>
+          <th>Detalhes</th>
+          <th>IP</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-audit"></tbody>
+    </table>
+    <p id="audit-vazio" class="empty-state" hidden>Nenhum evento encontrado.</p>
+  </section>
+</main>
+
+<script src="/static/js/admin_auditoria.js"></script>
+{% endblock %}

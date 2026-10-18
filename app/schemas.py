@@ -709,3 +709,18 @@ class UserChangePasswordIn(StrictBase):
 
 class UserToggleActiveIn(StrictBase):
     active: bool
+
+
+# ---------- Audit log (Fase 16) ----------
+
+
+class AuditLogRowOut(StrictBase):
+    id: int
+    created_at: datetime
+    user_id: Optional[int]
+    user_name: Optional[str]
+    action: str
+    entity: Optional[str]
+    entity_id: Optional[int]
+    details: Optional[str]
+    ip: Optional[str]
