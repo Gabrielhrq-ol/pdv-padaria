@@ -638,6 +638,10 @@ class BackupSettingsOut(StrictBase):
     backup_keep: int
     backup_on_cash_close: bool
     backup_compress: bool
+    # Fase 17 (B5 da auditoria): avisa se o path aponta pra dentro do
+    # proprio projeto (nao e backup externo real). Nao bloqueia pra nao
+    # travar configuracao durante setup inicial.
+    warnings: list[str] = Field(default_factory=list)
 
 
 class BackupDestinationOut(StrictBase):

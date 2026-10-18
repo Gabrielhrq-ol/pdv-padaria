@@ -1,13 +1,15 @@
-# Dependências de produção da Fase 5 (preparatória).
-# Versões fixadas (pin exato).
+# Dependências de produção.
+# Versões fixadas (pin exato). Upgrade na Fase 17 fecha os CVEs
+# A1/A2 do relatório de auditoria.
 
-fastapi==0.115.6
+fastapi==0.133.1
+starlette==1.3.1
 uvicorn[standard]==0.32.1
 SQLAlchemy==2.0.36
 alembic==1.14.0
 pydantic==2.10.3
 pydantic-settings==2.6.1
-Jinja2==3.1.4
+Jinja2==3.1.6
 argon2-cffi==23.1.0
 itsdangerous==2.2.0
 # Impressora ESC/POS; usada apenas quando setting printer_backend != dummy.

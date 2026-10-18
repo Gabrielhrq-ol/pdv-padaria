@@ -5,9 +5,16 @@ cobrindo todas as 9 fases implementadas. Conforme CLAUDE.md, **nada é
 corrigido neste relatório** — Gabriel decide o que vira issue e o que
 entra na entrega.
 
-**Data da auditoria:** 2026-10-16
-**Escopo:** Fases 1 → 9 (último commit `99ef35a`)
-**Suite:** 522 testes automatizados passando
+**Data da auditoria original:** 2026-10-16
+**Última revisão:** 2026-10-17 (Fase 17 pagou A1/A2/B1/B5)
+**Escopo:** Fases 1 → 9 (relatório original); Fase 17 fecha dívidas
+**Suite:** 617 testes automatizados passando
+
+> **Status pós-Fase 17:** 4 dos 11 CVEs do pip-audit foram corrigidos
+> (jinja2 → 3.1.6, starlette → 1.3.1, fastapi upgradado junto para
+> compatibilidade). Rotação de log e warning de path externo de backup
+> implementados. Resta apenas 1 CVE: pytest (TOCTOU em `/tmp`, não
+> aplicável no Windows).
 
 ---
 
@@ -46,7 +53,12 @@ fisicamente), qualquer pessoa pode logar como admin.
 
 ## 🟠 ALTOS
 
-### A1. `starlette==0.41.3` → recomendado 1.3.1+ (6 CVEs)
+### ~~A1~~ `starlette==0.41.3` → `1.3.1` ✅ RESOLVIDO (Fase 17)
+
+Upgradado para starlette 1.3.1 em 2026-10-17 (fastapi 0.115.6 → 0.133.1
+pra compatibilidade). Zero regressão nos 617 testes.
+
+### A1 (original). Detalhes dos CVEs corrigidos:
 
 **Detalhes:**
 
@@ -69,7 +81,11 @@ fisicamente), qualquer pessoa pode logar como admin.
 quantidade (6 CVEs) e porque uma delas (CVE-2026-48818) é Windows-specific
 e usamos StaticFiles.
 
-### A2. `jinja2==3.1.4` → recomendado 3.1.6 (3 CVEs)
+### ~~A2~~ `jinja2==3.1.4` → `3.1.6` ✅ RESOLVIDO (Fase 17)
+
+Upgradado em 2026-10-17. 3 CVEs de sandbox escape eliminados.
+
+### A2 (original). Detalhes:
 
 Todas as 3 vulnerabilidades são **sandbox escape para templates controlados
 por atacante**. No PDV, templates são sempre do próprio código em
@@ -134,7 +150,13 @@ automático começar a falhar, o dono só descobre quando precisar restaurar.
 
 ## 🟢 BAIXOS
 
-### B1. Logs sem rotação
+### ~~B1~~ Logs sem rotação ✅ RESOLVIDO (Fase 17)
+
+Trocado `FileHandler` por `RotatingFileHandler(maxBytes=10MB,
+backupCount=5)` em `app/main.py`. Agora `logs/pdv.log` nunca passa
+de ~60MB total (6 arquivos × 10MB).
+
+### B1 (original):
 
 **Localização:** `app/main.py:46` (`logging.FileHandler`)
 **Risco:** `logs/pdv.log` cresce sem limite. Em um ano de operação, pode
@@ -171,7 +193,13 @@ vazia ou com placeholder. Mensagem orienta como gerar.
 **Recomendação:** verificar que `.env.example` existe e está versionado
 com placeholders claros. Se não existir, criar.
 
-### B5. Backup pra pasta local não é bloqueado
+### ~~B5~~ Backup pra pasta local não é bloqueado ✅ RESOLVIDO (Fase 17)
+
+`BackupSettingsOut.warnings` agora traz avisos quando `backup_dir_1/2`
+estão dentro da pasta do PDV ou no mesmo drive (SSD do caixa). UI
+exibe no feedback. Não bloqueia (admin pode insistir), mas alerta.
+
+### B5 (original):
 
 **Localização:** `app/routers/backup.py:settings`
 **Risco:** admin pode configurar `backup_dir_1 = C:\Users\...\Documents\backups`

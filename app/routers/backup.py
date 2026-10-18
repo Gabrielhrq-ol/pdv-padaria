@@ -48,6 +48,47 @@ def _upsert(db: Session, key: str, value: str) -> None:
         row.value = value
 
 
+def _check_external(path: str) -> Optional[str]:
+    """
+    Fase 17 (B5 da auditoria): avisa se o caminho de backup esta
+    no mesmo volume do PDV (SSD do caixa). Backup real deve ir pra
+    pendrive, HD externo ou pasta sincronizada com nuvem.
+
+    Nao bloqueia - admin pode insistir se tiver razao. So avisa.
+    """
+    from pathlib import Path
+    from app.config import get_settings
+
+    if not path:
+        return None
+    try:
+        p = Path(path).resolve()
+    except Exception:
+        return None
+    pdv_root = Path(get_settings().db_absolute_path).parent.parent.resolve()
+    try:
+        p.relative_to(pdv_root)
+        return (
+            f"{path!r} esta DENTRO da pasta do PDV. "
+            "Backup nao protege contra queima do SSD. "
+            "Aponte pra pendrive (ex: E:\\pdv-backups) ou pasta do "
+            "Google Drive sincronizada."
+        )
+    except ValueError:
+        pass
+    # avisa se e C:\ e a instalacao tambem e C:\ (mesmo drive, SSD unico)
+    try:
+        if p.drive and pdv_root.drive and p.drive.upper() == pdv_root.drive.upper():
+            # mesmo drive mas pasta diferente - menos ruim, so lembra
+            return (
+                f"{path!r} esta no mesmo drive do PDV ({p.drive}). "
+                "Idealmente use um pendrive ou pasta Google Drive em outra midia."
+            )
+    except Exception:
+        pass
+    return None
+
+
 def _current_settings(db: Session) -> BackupSettingsOut:
     def _b(key: str, default: bool) -> bool:
         v = _get(db, key, "")
@@ -62,12 +103,22 @@ def _current_settings(db: Session) -> BackupSettingsOut:
         except (TypeError, ValueError):
             return default
 
+    dir1 = _get(db, "backup_dir_1", "") or None
+    dir2 = _get(db, "backup_dir_2", "") or None
+    warnings: list[str] = []
+    for d in (dir1, dir2):
+        if d:
+            w = _check_external(d)
+            if w:
+                warnings.append(w)
+
     return BackupSettingsOut(
-        backup_dir_1=_get(db, "backup_dir_1", "") or None,
-        backup_dir_2=_get(db, "backup_dir_2", "") or None,
+        backup_dir_1=dir1,
+        backup_dir_2=dir2,
         backup_keep=_i("backup_keep", 30),
         backup_on_cash_close=_b("backup_on_cash_close", True),
         backup_compress=_b("backup_compress", True),
+        warnings=warnings,
     )
 
 

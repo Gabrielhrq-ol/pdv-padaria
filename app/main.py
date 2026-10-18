@@ -13,6 +13,7 @@ Checklist (ver CLAUDE.md secao Seguranca):
 from __future__ import annotations
 
 import logging
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
@@ -51,7 +52,14 @@ logging.basicConfig(
     level=logging.INFO,
     format="[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s",
     handlers=[
-        logging.FileHandler(LOG_DIR / "pdv.log", encoding="utf-8"),
+        # Fase 17 (B1 da auditoria): rotaciona a cada 10MB, mantem 5
+        # arquivos. Evita que logs/pdv.log cresca indefinidamente.
+        RotatingFileHandler(
+            LOG_DIR / "pdv.log",
+            maxBytes=10 * 1024 * 1024,
+            backupCount=5,
+            encoding="utf-8",
+        ),
         logging.StreamHandler(),
     ],
 )

@@ -95,6 +95,10 @@
     document.getElementById('keep').value = s.backup_keep;
     document.getElementById('on-close').checked = !!s.backup_on_cash_close;
     document.getElementById('compress').checked = !!s.backup_compress;
+    // Fase 17 (B5): warnings do backend sobre paths nao-externos
+    if (s.warnings && s.warnings.length) {
+      s.warnings.forEach(w => showFeedback('AVISO: ' + w, 'erro'));
+    }
   }
 
   async function saveSettings(ev) {
