@@ -9,10 +9,11 @@ from fastapi.testclient import TestClient
 
 
 class TestPaginaCaixa:
-    def test_anonimo_redireciona_login(self, client: TestClient) -> None:
+    def test_anonimo_abre_publico(self, client: TestClient) -> None:
+        # Fase 18: /caixa e publico (parte do fluxo do PDV sem login).
         r = client.get("/caixa", follow_redirects=False)
-        assert r.status_code == 302
-        assert "/login" in r.headers["location"]
+        assert r.status_code == 200
+        assert "Caixa" in r.text
 
     def test_caixa_pode_abrir(self, caixa_client: TestClient) -> None:
         r = caixa_client.get("/caixa")

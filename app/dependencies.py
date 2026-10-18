@@ -99,3 +99,33 @@ def get_optional_user(
     if user.locked_until is not None and user.locked_until > utc_now():
         return None
     return user
+
+
+def require_user_or_operator(
+    session: Optional[str] = Cookie(default=None, alias=SESSION_COOKIE),
+    operator_id: Optional[str] = Cookie(default=None, alias="operator_id"),
+    db: Session = Depends(get_db),
+) -> User:
+    """
+    Fase 18: aceita OU session cookie (admin logado) OU operator_id cookie
+    (operador do PDV sem login). Serve rotas do PDV que precisam saber
+    quem fez a acao, mas o PDV abre sem senha.
+    """
+    # Tenta session primeiro
+    if session:
+        uid = verify_session_token(session, max_age_seconds=SESSION_MAX_AGE_SECONDS)
+        if uid is not None:
+            user = db.get(User, uid)
+            if user is not None and user.active:
+                if user.locked_until is None or user.locked_until <= utc_now():
+                    return user
+    # Fallback: operator_id do PDV
+    if operator_id:
+        try:
+            uid = int(operator_id)
+            user = db.get(User, uid)
+            if user is not None and user.active:
+                return user
+        except (TypeError, ValueError):
+            pass
+    raise _unauth("Nenhum operador ou sessao ativa.")

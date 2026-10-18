@@ -38,6 +38,7 @@ from app.routers import audit as audit_router
 from app.routers import auth as auth_router
 from app.routers import backup as backup_router
 from app.routers import cash as cash_router
+from app.routers import pdv as pdv_router
 from app.routers import products as products_router
 from app.routers import reports as reports_router
 from app.routers import sales as sales_router
@@ -169,15 +170,26 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
 def _home_for(user: User) -> str:
-    """Rota default por papel (Fase 11): admin -> painel, caixa -> PDV."""
+    """Rota default por papel apos login (Fase 11/18): admin -> painel."""
     return "/admin" if user.role == "admin" else "/pdv"
 
 
-@app.get("/", include_in_schema=False)
-async def root(user: User | None = Depends(get_optional_user)) -> RedirectResponse:
-    if user is None:
-        return RedirectResponse(url="/login", status_code=302)
-    return RedirectResponse(url=_home_for(user), status_code=302)
+@app.get("/", include_in_schema=False, response_model=None)
+async def root(
+    request: Request,
+    user: User | None = Depends(get_optional_user),
+) -> HTMLResponse | RedirectResponse:
+    """
+    Fase 18: tela inicial com 2 cards (PDV sem senha / Painel com login).
+    Se admin ja esta logado, pula pro painel direto.
+    """
+    if user is not None and user.role == "admin":
+        return RedirectResponse(url="/admin", status_code=302)
+    return templates.TemplateResponse(
+        request=request,
+        name="home.html",
+        context={"env": settings.ENVIRONMENT},
+    )
 
 
 @app.get("/login", include_in_schema=False, response_model=None)
@@ -218,19 +230,27 @@ async def pdv_page(
     user: User | None = Depends(get_optional_user),
     db: Session = Depends(get_db),
 ) -> HTMLResponse | RedirectResponse:
-    if user is None:
-        return RedirectResponse(url="/login", status_code=302)
+    """
+    Fase 18: PDV e PUBLICO (sem login). Operador se identifica num
+    dropdown no proprio PDV via cookie operator_id. Admin logado
+    acessa normalmente.
+    """
     # Guard: se cash required e nao ha caixa aberto, manda pra /caixa
     from app.services.cash_service import get_open_session, is_cash_required
 
     if is_cash_required(db) and get_open_session(db) is None:
         return RedirectResponse(url="/caixa?msg=abra", status_code=302)
+    # user pode ser None (acesso publico) - template lida com isso
+    user_ctx = (
+        {"name": user.name, "username": user.username, "role": user.role}
+        if user else None
+    )
     return templates.TemplateResponse(
         request=request,
         name="pdv.html",
         context={
             "env": settings.ENVIRONMENT,
-            "user": {"name": user.name, "username": user.username, "role": user.role},
+            "user": user_ctx,  # pode ser None (PDV publico)
         },
     )
 
@@ -240,14 +260,20 @@ async def caixa_page(
     request: Request,
     user: User | None = Depends(get_optional_user),
 ) -> HTMLResponse | RedirectResponse:
-    if user is None:
-        return RedirectResponse(url="/login", status_code=302)
+    """
+    Fase 18: pagina do caixa agora e publica (parte do fluxo do PDV).
+    Operador identificado via cookie operator_id. Admin logado passa igual.
+    """
+    user_ctx = (
+        {"name": user.name, "username": user.username, "role": user.role}
+        if user else None
+    )
     return templates.TemplateResponse(
         request=request,
         name="caixa.html",
         context={
             "env": settings.ENVIRONMENT,
-            "user": {"name": user.name, "username": user.username, "role": user.role},
+            "user": user_ctx,
         },
     )
 
@@ -421,3 +447,4 @@ app.include_router(reports_router.router)
 app.include_router(backup_router.router)
 app.include_router(users_router.router)
 app.include_router(audit_router.router)
+app.include_router(pdv_router.router)

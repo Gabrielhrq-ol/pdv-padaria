@@ -1,56 +1,68 @@
 {% extends "base.html" %}
 
-{% block title %}PDV - Padaria{% endblock %}
+{% block title %}Padaria{% endblock %}
 {% block body_class %}pdv-body pdv-market{% endblock %}
+
+{% block head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+{% endblock %}
 
 {% block body %}
 <header class="pdv-header-market">
-  <div class="pdv-header-left">
-    <img src="/static/img/logo.png" alt="Logo" class="pdv-logo"
-         onerror="this.style.display='none'">
+  <a href="/" class="pdv-header-left" title="Voltar">
+    <svg class="pdv-logo-svg" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="30" cy="36" rx="24" ry="17" fill="#d4a574" stroke="#5d3a1a" stroke-width="1.5"/>
+      <path d="M 11 34 Q 17 25 23 34 Q 29 25 35 34 Q 41 25 47 34" fill="none" stroke="#5d3a1a" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
     <div class="pdv-brand">
-      <strong>PDV</strong>
-      <span>Padaria</span>
+      <strong>Padaria</strong>
+      <span>frente de caixa</span>
     </div>
-  </div>
+  </a>
   <div class="pdv-header-center">
-    <span class="sale-tag">VENDA</span>
+    <span class="sale-tag">venda</span>
     <strong class="sale-number" id="sale-number">—</strong>
   </div>
   <div class="pdv-header-right">
-    <span class="env-badge">{{ env }}</span>
-    <span class="operator">
-      Operador: <strong>{{ user.name }}</strong>
-    </span>
-    {% if user.role == 'admin' %}
-    <a href="/admin" class="btn btn-sm">Painel</a>
+    <!-- Fase 18: dropdown de operador (sem senha) -->
+    <div class="operator-selector">
+      <button type="button" id="btn-operator" class="operator-btn" aria-haspopup="true">
+        <span class="operator-label">Operador</span>
+        <strong id="operator-name">Trocar</strong>
+        <span class="operator-caret">&#9662;</span>
+      </button>
+      <div id="operator-menu" class="operator-menu" hidden role="menu"></div>
+    </div>
+    {% if user and user.role == 'admin' %}
+    <a href="/admin" class="btn btn-sm btn-ghost">Painel</a>
     {% endif %}
-    <button type="button" id="btn-sair" class="btn btn-sm">Sair</button>
   </div>
 </header>
 
 <main class="pdv-main-market">
   <!-- COLUNA ESQUERDA: produto atual GIGANTE -->
   <section class="pdv-product-pane">
-    <div class="product-pane-label">PRODUTO</div>
+    <div class="product-pane-label">produto</div>
     <div class="product-pane-name" id="current-product-name">—</div>
 
     <div class="product-pane-grid">
       <div class="product-pane-cell">
-        <div class="cell-label">Unitário</div>
+        <div class="cell-label">preço</div>
         <div class="cell-value" id="current-unit-price">R$ 0,00</div>
       </div>
       <div class="product-pane-cell">
-        <div class="cell-label">Quantidade</div>
+        <div class="cell-label">quantidade</div>
         <div class="cell-value" id="current-qty">0</div>
       </div>
       <div class="product-pane-cell product-pane-highlight">
-        <div class="cell-label">Total do item</div>
+        <div class="cell-label">total do item</div>
         <div class="cell-value" id="current-line-total">R$ 0,00</div>
       </div>
     </div>
 
-    <div class="product-pane-prompt" id="prompt-passe">PASSE O PRODUTO</div>
+    <div class="product-pane-prompt" id="prompt-passe">pode passar o produto</div>
 
     <div class="pdv-code-row">
       <label for="pdv-code" class="sr-only">Codigo</label>
@@ -74,16 +86,16 @@
   <!-- COLUNA DIREITA: cupom + TOTAL -->
   <aside class="pdv-cupom-pane">
     <div class="cupom-pane-head">
-      <span>Item do Cupom</span>
+      <span>cupom</span>
       <span class="cupom-pane-count" id="cupom-count">0 itens</span>
     </div>
 
     <div class="cupom-pane-list" id="cupom-list" tabindex="0">
-      <p class="cupom-pane-empty" id="pdv-empty">Nenhum item.<br>Bipe ou digite um codigo.</p>
+      <p class="cupom-pane-empty" id="pdv-empty">Nada por aqui ainda.<br>Comece passando o primeiro produto.</p>
     </div>
 
     <div class="cupom-pane-total">
-      <div class="total-label">TOTAL</div>
+      <div class="total-label">total</div>
       <div class="total-value" id="pdv-total">R$ 0,00</div>
     </div>
   </aside>
@@ -256,4 +268,5 @@
 
 <script src="/static/js/pdv.js"></script>
 <script src="/static/js/pdv_operacoes.js"></script>
+<script src="/static/js/pdv_operator.js"></script>
 {% endblock %}

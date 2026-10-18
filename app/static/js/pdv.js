@@ -826,7 +826,9 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('pdv-code').addEventListener('keydown', handleCodeEnter);
-    document.getElementById('btn-sair').addEventListener('click', doLogout);
+    // Fase 18: btn-sair pode nao existir no PDV (header mudou pra operator selector).
+    const btnSair = document.getElementById('btn-sair');
+    if (btnSair) btnSair.addEventListener('click', doLogout);
     document.addEventListener('keydown', handleGlobalKey);
 
     // Botoes do rodape (notebook-friendly)

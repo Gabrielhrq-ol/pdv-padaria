@@ -89,15 +89,19 @@ class TestRedirectPorPapel:
         assert r.status_code == 302
         assert r.headers["location"] == "/admin"
 
-    def test_caixa_root_vai_pra_pdv(self, caixa_client: TestClient) -> None:
+    def test_caixa_root_vai_pra_home(self, caixa_client: TestClient) -> None:
+        # Fase 18: raiz mostra home com 2 cards; nao redireciona mais caixa pro PDV.
         r = caixa_client.get("/", follow_redirects=False)
-        assert r.status_code == 302
-        assert r.headers["location"] == "/pdv"
+        assert r.status_code == 200
+        # home deve ter link pro PDV e pro login
+        assert "/pdv" in r.text
+        assert "/login" in r.text
 
-    def test_anonimo_root_vai_pra_login(self, client: TestClient) -> None:
+    def test_anonimo_root_vai_pra_home(self, client: TestClient) -> None:
+        # Fase 18: PDV e publico agora; raiz mostra home com cards.
         r = client.get("/", follow_redirects=False)
-        assert r.status_code == 302
-        assert "/login" in r.headers["location"]
+        assert r.status_code == 200
+        assert "/pdv" in r.text
 
     def test_login_admin_logado_redireciona_pra_admin(
         self, admin_client: TestClient

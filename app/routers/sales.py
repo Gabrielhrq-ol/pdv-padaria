@@ -26,7 +26,12 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 
 from app.db import get_db
-from app.dependencies import require_admin, require_authenticated, require_csrf
+from app.dependencies import (
+    require_admin,
+    require_authenticated,
+    require_csrf,
+    require_user_or_operator,
+)
 from app.models import AuditLog, Product, Sale, SaleItem, Setting, User
 from app.schemas import (
     FinalizeRequest,
@@ -84,7 +89,7 @@ def _raise_sales_error(exc: SalesError) -> None:
 @router.get("/open", response_model=Optional[SaleOut])
 def get_open(
     db: Session = Depends(get_db),
-    user: User = Depends(require_authenticated),
+    user: User = Depends(require_user_or_operator),
 ) -> Optional[Sale]:
     """Retorna a venda em aberto do operador atual (ou null)."""
     return sales_service.get_open_sale(db, user.id)
@@ -136,7 +141,7 @@ def list_sales(
 def open_sale(
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(require_authenticated),
+    user: User = Depends(require_user_or_operator),
 ) -> Sale:
     sale = sales_service.create_open_sale(db, user)
     _audit(
@@ -155,7 +160,7 @@ def open_sale(
 @router.get("/last-completed", response_model=Optional[SaleOut])
 def last_completed_route(
     db: Session = Depends(get_db),
-    user: User = Depends(require_authenticated),
+    user: User = Depends(require_user_or_operator),
 ) -> Optional[Sale]:
     """Ultima venda completed do operador atual (para F10 reimprimir)."""
     return sales_service.get_last_completed(db, user.id)
@@ -165,7 +170,7 @@ def last_completed_route(
 def get_sale(
     sale_id: int,
     db: Session = Depends(get_db),
-    user: User = Depends(require_authenticated),
+    user: User = Depends(require_user_or_operator),
 ) -> Sale:
     sale = _get_sale_404(db, sale_id)
     # Caixa so vê suas vendas; admin ve tudo.
@@ -184,7 +189,7 @@ def add_item(
     payload: SaleItemAdd,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(require_authenticated),
+    user: User = Depends(require_user_or_operator),
 ) -> Sale:
     sale = _get_sale_404(db, sale_id)
     if user.role != "admin" and sale.user_id != user.id:
@@ -247,7 +252,7 @@ def change_item(
     payload: SaleItemUpdate,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(require_authenticated),
+    user: User = Depends(require_user_or_operator),
 ) -> Sale:
     sale = _get_sale_404(db, sale_id)
     if user.role != "admin" and sale.user_id != user.id:
@@ -285,7 +290,7 @@ def remove_item(
     item_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(require_authenticated),
+    user: User = Depends(require_user_or_operator),
 ) -> Sale:
     sale = _get_sale_404(db, sale_id)
     if user.role != "admin" and sale.user_id != user.id:
@@ -327,7 +332,7 @@ def finalize(
     payload: FinalizeRequest,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(require_authenticated),
+    user: User = Depends(require_user_or_operator),
 ) -> FinalizeResult:
     sale = _get_sale_404(db, sale_id)
     if user.role != "admin" and sale.user_id != user.id:
@@ -394,7 +399,7 @@ def reverse(
     payload: ReverseRequest,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(require_authenticated),
+    user: User = Depends(require_user_or_operator),
 ) -> Sale:
     sale = _get_sale_404(db, sale_id)
     if user.role != "admin" and sale.user_id != user.id:
@@ -428,7 +433,7 @@ def reprint(
     sale_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(require_authenticated),
+    user: User = Depends(require_user_or_operator),
 ) -> FinalizeResult:
     sale = _get_sale_404(db, sale_id)
     if user.role != "admin" and sale.user_id != user.id:
@@ -481,7 +486,7 @@ def cancel_sale(
     payload: SaleCancel,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(require_authenticated),
+    user: User = Depends(require_user_or_operator),
 ) -> Sale:
     sale = _get_sale_404(db, sale_id)
     if user.role != "admin" and sale.user_id != user.id:

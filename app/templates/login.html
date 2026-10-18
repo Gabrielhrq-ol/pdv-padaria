@@ -1,19 +1,30 @@
 {% extends "base.html" %}
 
-{% block title %}Entrar - PDV Padaria{% endblock %}
-{% block body_class %}login-body{% endblock %}
+{% block title %}Entrar &middot; Padaria{% endblock %}
+{% block body_class %}login-body-v2{% endblock %}
+
+{% block head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+{% endblock %}
 
 {% block body %}
-<main class="login-wrapper">
-  <div class="login-card">
-    <header class="login-header">
-      <h1>PDV Padaria</h1>
-      <p class="login-sub">Entre para continuar</p>
-    </header>
+<main class="login-wrapper-v2">
+  <a href="/" class="login-back">&larr; voltar</a>
+
+  <div class="login-card-v2">
+    <svg class="login-logo" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="30" cy="36" rx="24" ry="17" fill="#d4a574" stroke="#5d3a1a" stroke-width="1.5"/>
+      <path d="M 11 34 Q 17 25 23 34 Q 29 25 35 34 Q 41 25 47 34" fill="none" stroke="#5d3a1a" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+
+    <h1>Painel do dono</h1>
+    <p class="login-sub-v2">entre para gerenciar</p>
 
     <form id="form-login" novalidate>
       <div class="form-row">
-        <label for="field-username">Usuario</label>
+        <label for="field-username">Usu&aacute;rio</label>
         <input
           type="text"
           id="field-username"
@@ -38,13 +49,13 @@
 
       <div id="erro-login" class="erro-form" hidden></div>
 
-      <button type="submit" id="btn-entrar" class="btn btn-primary btn-block">
+      <button type="submit" id="btn-entrar" class="btn-login">
         Entrar
       </button>
     </form>
 
-    <footer class="login-footer">
-      <span class="env-badge">{{ env }}</span>
+    <footer class="login-footer-v2">
+      <small>{{ env }}</small>
     </footer>
   </div>
 </main>

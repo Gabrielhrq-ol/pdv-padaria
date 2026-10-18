@@ -17,7 +17,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.dependencies import require_admin, require_authenticated, require_csrf
+from app.dependencies import (
+    require_admin,
+    require_authenticated,
+    require_csrf,
+    require_user_or_operator,
+)
 from app.models import AuditLog, Product, User
 from app.schemas import (
     ActiveUpdate,
@@ -72,7 +77,7 @@ def list_products(
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
-    _: User = Depends(require_authenticated),
+    _: User = Depends(require_user_or_operator),
 ) -> list[Product]:
     stmt = select(Product).order_by(Product.name).limit(limit).offset(offset)
     if not include_inactive:
@@ -86,7 +91,7 @@ def search_products(
     include_inactive: bool = Query(default=False),
     limit: int = Query(default=50, ge=1, le=500),
     db: Session = Depends(get_db),
-    _: User = Depends(require_authenticated),
+    _: User = Depends(require_user_or_operator),
 ) -> list[Product]:
     q = q.strip()
     like = f"%{q}%"
@@ -111,7 +116,7 @@ def search_products(
 def list_favorites(
     limit: int = Query(default=12, ge=1, le=50),
     db: Session = Depends(get_db),
-    _: User = Depends(require_authenticated),
+    _: User = Depends(require_user_or_operator),
 ) -> list[Product]:
     """
     Produtos marcados como favoritos (admin marca em /products com o
@@ -131,7 +136,7 @@ def list_favorites(
 def product_by_code(
     code: str,
     db: Session = Depends(get_db),
-    _: User = Depends(require_authenticated),
+    _: User = Depends(require_user_or_operator),
 ) -> ByCodeResult:
     """
     Resolve codigo (barcode, internal_code ou N*codigo) e devolve o produto
@@ -151,7 +156,7 @@ def product_by_code(
 def get_product(
     product_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_authenticated),
+    _: User = Depends(require_user_or_operator),
 ) -> Product:
     return _get_or_404(db, product_id)
 

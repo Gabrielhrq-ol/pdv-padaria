@@ -13,7 +13,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.dependencies import require_admin, require_authenticated, require_csrf
+from app.dependencies import (
+    require_admin,
+    require_authenticated,
+    require_csrf,
+    require_user_or_operator,
+)
 from app.models import AuditLog, CashMovement, CashSession, User
 from app.schemas import (
     CashCloseIn,
@@ -80,7 +85,7 @@ def _movement_to_out(db: Session, m: CashMovement) -> CashMovementOut:
 @router.get("/current", response_model=CashSessionOut)
 def current(
     db: Session = Depends(get_db),
-    _: User = Depends(require_authenticated),
+    _: User = Depends(require_user_or_operator),
 ) -> CashSessionOut:
     s = cash_service.get_open_session(db)
     if s is None:
@@ -91,7 +96,7 @@ def current(
 @router.get("/current/summary", response_model=CashSessionSummaryOut)
 def current_summary(
     db: Session = Depends(get_db),
-    _: User = Depends(require_authenticated),
+    _: User = Depends(require_user_or_operator),
 ) -> CashSessionSummaryOut:
     s = cash_service.get_open_session(db)
     if s is None:
@@ -123,7 +128,7 @@ def current_summary(
 def open_cash(
     payload: CashOpenIn,
     db: Session = Depends(get_db),
-    user: User = Depends(require_authenticated),
+    user: User = Depends(require_user_or_operator),
 ) -> CashSessionOut:
     try:
         s = cash_service.open_session(
@@ -148,7 +153,7 @@ def open_cash(
 def sangria(
     payload: CashSangriaIn,
     db: Session = Depends(get_db),
-    user: User = Depends(require_authenticated),
+    user: User = Depends(require_user_or_operator),
 ) -> CashMovementOut:
     try:
         mv = cash_service.register_sangria(
@@ -170,7 +175,7 @@ def sangria(
 def suprimento(
     payload: CashSuprimentoIn,
     db: Session = Depends(get_db),
-    user: User = Depends(require_authenticated),
+    user: User = Depends(require_user_or_operator),
 ) -> CashMovementOut:
     try:
         mv = cash_service.register_suprimento(
@@ -192,7 +197,7 @@ def suprimento(
 def close_cash(
     payload: CashCloseIn,
     db: Session = Depends(get_db),
-    user: User = Depends(require_authenticated),
+    user: User = Depends(require_user_or_operator),
 ) -> CashSessionOut:
     try:
         s = cash_service.close_session(
@@ -229,6 +234,6 @@ def toggle_cash_required(
 )
 def get_cash_required(
     db: Session = Depends(get_db),
-    _: User = Depends(require_authenticated),
+    _: User = Depends(require_user_or_operator),
 ) -> CashRequiredToggle:
     return CashRequiredToggle(enabled=cash_service.is_cash_required(db))
