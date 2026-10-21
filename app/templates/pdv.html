@@ -1,145 +1,132 @@
 {% extends "base.html" %}
 
 {% block title %}PDV · João &amp; Maria{% endblock %}
-{% block body_class %}pdv-body pdv-market{% endblock %}
+{% block body_class %}pdv-body pdv-onix{% endblock %}
 
 {% block head %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 {% endblock %}
 
 {% block body %}
-<header class="pdv-header-market pdv-header-clean">
-  <a href="/" class="pdv-header-left" title="Voltar">
-    <img src="/static/img/logo.jpeg" alt="João &amp; Maria" class="pdv-logo-img">
-  </a>
-  <div class="pdv-header-center">
-    <strong class="sale-number" id="sale-number">—</strong>
+<!-- Camada 1: campos principais (sempre visiveis) -->
+<main class="pdv-onix-main">
+
+  <!-- PRODUTO (nome em barra branca grande no topo) -->
+  <section class="onix-field onix-field-produto">
+    <label>Produto</label>
+    <div class="onix-value onix-value-produto" id="current-product-name">&nbsp;</div>
+  </section>
+
+  <!-- CUPOM (lista rolavel na direita) -->
+  <aside class="onix-cupom">
+    <div class="onix-cupom-head">Item do Cupom</div>
+    <div class="onix-cupom-list" id="cupom-list">
+      <p class="onix-cupom-empty" id="pdv-empty">Nenhum item ainda.<br>Bipe ou digite o código.</p>
+    </div>
+  </aside>
+
+  <!-- VALOR UNITARIO + QUANTIDADE (lado a lado abaixo do Produto) -->
+  <section class="onix-field onix-field-unit">
+    <label>Valor Unitário</label>
+    <div class="onix-value" id="current-unit-price">&nbsp;</div>
+  </section>
+
+  <section class="onix-field onix-field-qty">
+    <label>Quantidade</label>
+    <div class="onix-value" id="current-qty">&nbsp;</div>
+  </section>
+
+  <!-- TOTAL DO ITEM -->
+  <section class="onix-field onix-field-total-item">
+    <label>Total do Item</label>
+    <div class="onix-value" id="current-line-total">&nbsp;</div>
+  </section>
+
+  <!-- Input de código (abaixo das barras, invisível mas focável) -->
+  <input
+    type="text"
+    id="pdv-code"
+    class="onix-code-input"
+    autocomplete="off"
+    inputmode="numeric"
+    autofocus
+    placeholder="bipe o produto ou digite o código">
+
+  <!-- Logo da padaria + TOTAL (parte de baixo) -->
+  <div class="onix-footer-row">
+    <a href="/" class="onix-logo-wrap" title="Voltar à tela inicial">
+      <img src="/static/img/logo.jpeg" alt="João &amp; Maria">
+    </a>
+    <div class="onix-total">
+      <span>Total</span>
+      <strong id="pdv-total">R$ 0,00</strong>
+    </div>
   </div>
-  <div class="pdv-header-right">
+
+  <!-- Rodape vermelho com nome da ação atual + feedback -->
+  <div class="onix-action-bar">
+    <span id="onix-action-label">PASSE O PRODUTO</span>
+    <span id="pdv-feedback" class="onix-feedback" aria-live="polite"></span>
+  </div>
+
+  <!-- Barra de status cinza embaixo (CAIXA / OPERADOR / Venda / Painel) -->
+  <div class="onix-status-bar">
+    <span>CAIXA:001</span>
+    <span>EMP:001</span>
+    <span id="status-oper">OPER: —</span>
+    <span>VENDA: <strong id="sale-number">—</strong></span>
+    <span class="onix-status-spacer"></span>
+
+    <!-- Operator selector discreto -->
     <div class="operator-selector">
-      <button type="button" id="btn-operator" class="operator-btn" aria-haspopup="true">
+      <button type="button" id="btn-operator" class="operator-btn">
         <strong id="operator-name">Trocar operador</strong>
-        <span class="operator-caret">&#9662;</span>
+        <span class="operator-caret">▾</span>
       </button>
       <div id="operator-menu" class="operator-menu" hidden role="menu"></div>
     </div>
+
     {% if user and user.role == 'admin' %}
-    <a href="/admin" class="btn btn-sm btn-ghost">Painel</a>
+    <a href="/admin" class="onix-status-link">Painel</a>
     {% endif %}
   </div>
-</header>
 
-<main class="pdv-main-market">
-  <!-- COLUNA ESQUERDA: produto atual GIGANTE -->
-  <section class="pdv-product-pane">
-    <div class="product-pane-label">produto</div>
-    <div class="product-pane-name" id="current-product-name">—</div>
-
-    <div class="product-pane-grid">
-      <div class="product-pane-cell">
-        <div class="cell-label">preço</div>
-        <div class="cell-value" id="current-unit-price">R$ 0,00</div>
-      </div>
-      <div class="product-pane-cell">
-        <div class="cell-label">quantidade</div>
-        <div class="cell-value" id="current-qty">0</div>
-      </div>
-      <div class="product-pane-cell product-pane-highlight">
-        <div class="cell-label">total do item</div>
-        <div class="cell-value" id="current-line-total">R$ 0,00</div>
-      </div>
-    </div>
-
-    <div class="product-pane-prompt" id="prompt-passe">pode passar o produto</div>
-
-    <div class="pdv-code-row">
-      <label for="pdv-code" class="sr-only">Codigo</label>
-      <input
-        type="text"
-        id="pdv-code"
-        class="pdv-code-input"
-        autocomplete="off"
-        inputmode="numeric"
-        autofocus
-        placeholder="bipe ou digite codigo (ex: 101, 7891111, 3*101)">
-      <span id="pdv-feedback" class="pdv-feedback" aria-live="polite"></span>
-    </div>
-
-    <!-- Barra de favoritos (Fase 14) -->
-    <div class="pdv-favorites-bar" id="pdv-favorites-bar">
-      <!-- preenchido via JS -->
-    </div>
-  </section>
-
-  <!-- COLUNA DIREITA: cupom + TOTAL -->
-  <aside class="pdv-cupom-pane">
-    <div class="cupom-pane-head">
-      <span>cupom</span>
-      <span class="cupom-pane-count" id="cupom-count">0 itens</span>
-    </div>
-
-    <div class="cupom-pane-list" id="cupom-list" tabindex="0">
-      <p class="cupom-pane-empty" id="pdv-empty">Nada por aqui ainda.<br>Comece passando o primeiro produto.</p>
-    </div>
-
-    <div class="cupom-pane-total">
-      <div class="total-label">total</div>
-      <div class="total-value" id="pdv-total">R$ 0,00</div>
-    </div>
-  </aside>
 </main>
 
-<footer class="pdv-shortcuts-market pdv-shortcuts-clean">
-  <button type="button" class="shortcut-btn" data-action="buscar">
-    <span class="shortcut-label">Buscar</span>
-    <span class="shortcut-keys"><kbd>F2</kbd></span>
-  </button>
-  <button type="button" class="shortcut-btn" data-action="qty">
-    <span class="shortcut-label">Quantidade</span>
-    <span class="shortcut-keys"><kbd>F3</kbd></span>
-  </button>
-  <button type="button" class="shortcut-btn shortcut-main" data-action="pagar">
-    <span class="shortcut-label">Pagar</span>
-    <span class="shortcut-keys"><kbd>F6</kbd></span>
-  </button>
-  <button type="button" class="shortcut-btn shortcut-ops" data-action="operacoes">
-    <span class="shortcut-label">Mais</span>
-    <span class="shortcut-keys"><kbd>F12</kbd></span>
-  </button>
-  <!-- Botoes secundarios ficam escondidos no menu "Mais" / F12 -->
-  <button type="button" class="shortcut-btn-hidden" data-action="remover" aria-hidden="true"></button>
-  <button type="button" class="shortcut-btn-hidden" data-action="preco" aria-hidden="true"></button>
-  <button type="button" class="shortcut-btn-hidden" data-action="reimprimir" aria-hidden="true"></button>
-  <button type="button" class="shortcut-btn-hidden" data-action="cancelar" aria-hidden="true"></button>
-</footer>
+<!-- Favoritos (grid flutuante, oculto por padrão até Admin ativar) -->
+<div class="pdv-favorites-bar pdv-favorites-floating" id="pdv-favorites-bar" hidden></div>
 
-<!-- Modal de busca por nome (F2) -->
-<div id="modal-busca" class="modal" hidden aria-modal="true" role="dialog">
-  <div class="modal-content modal-busca">
+<!-- =====================================================================
+     MODAIS
+     ===================================================================== -->
+
+<!-- Busca por nome (F2) -->
+<div id="modal-busca" class="modal onix-modal" hidden aria-modal="true" role="dialog">
+  <div class="modal-content">
     <header class="modal-header">
       <h2>Buscar produto</h2>
-      <button type="button" class="btn-close" data-close="modal-busca">x</button>
+      <button type="button" class="btn-close" data-close="modal-busca">×</button>
     </header>
     <div class="modal-body">
-      <input type="search" id="busca-input" placeholder="nome, codigo..." autofocus>
+      <input type="search" id="busca-input" placeholder="digite nome ou código..." autofocus>
       <div id="busca-resultado" class="busca-resultado"></div>
     </div>
   </div>
 </div>
 
-<!-- Modal de alterar qty (F3) -->
-<div id="modal-qty" class="modal" hidden aria-modal="true" role="dialog">
-  <div class="modal-content modal-qty">
+<!-- Alterar qty (F3 legado / Ctrl+Q) -->
+<div id="modal-qty" class="modal onix-modal" hidden aria-modal="true" role="dialog">
+  <div class="modal-content">
     <header class="modal-header">
       <h2>Alterar quantidade</h2>
-      <button type="button" class="btn-close" data-close="modal-qty">x</button>
+      <button type="button" class="btn-close" data-close="modal-qty">×</button>
     </header>
     <div class="modal-body">
       <p id="qty-product-info"></p>
       <input type="text" id="qty-input" autofocus inputmode="decimal" placeholder="0">
-      <p class="hint">UN: inteiro | KG/L: use virgula (ex: 0,350)</p>
+      <p class="hint">UN: inteiro · KG/L: use vírgula (ex: 0,350)</p>
       <div class="modal-actions">
         <button type="button" class="btn" data-close="modal-qty">Cancelar</button>
         <button type="button" id="qty-ok" class="btn btn-primary">OK</button>
@@ -148,28 +135,39 @@
   </div>
 </div>
 
-<!-- Modal consultar preco (F9) -->
-<div id="modal-preco" class="modal" hidden aria-modal="true" role="dialog">
-  <div class="modal-content modal-preco">
+<!-- Consulta preço (H / F9) -->
+<div id="modal-preco" class="modal onix-modal" hidden aria-modal="true" role="dialog">
+  <div class="modal-content">
     <header class="modal-header">
-      <h2>Consultar preco</h2>
-      <button type="button" class="btn-close" data-close="modal-preco">x</button>
+      <h2>Consulta Mercadoria</h2>
+      <button type="button" class="btn-close" data-close="modal-preco">×</button>
     </header>
     <div class="modal-body">
-      <input type="search" id="preco-input" placeholder="bipe o produto..." autofocus>
+      <input type="search" id="preco-input" placeholder="bipe ou digite o código..." autofocus>
       <div id="preco-resultado" class="preco-resultado"></div>
     </div>
   </div>
 </div>
 
-<!-- Modal de pagamento (F6) -->
-<div id="modal-pagamento" class="modal" hidden aria-modal="true" role="dialog">
-  <div class="modal-content modal-pagamento">
+<!-- Pagamento (Enter / F6) -->
+<div id="modal-pagamento" class="modal onix-modal" hidden aria-modal="true" role="dialog">
+  <div class="modal-content modal-wide">
     <header class="modal-header">
-      <h2>Pagamento</h2>
-      <button type="button" class="btn-close" data-close="modal-pagamento">x</button>
+      <h2>Formas de pagamento</h2>
+      <button type="button" class="btn-close" data-close="modal-pagamento">×</button>
     </header>
     <div class="modal-body">
+      <div class="onix-pay-methods">
+        <div class="hint">Aperte 1-5 pra trocar a forma do primeiro pagamento:</div>
+        <div class="onix-pay-methods-list">
+          <span><kbd>1</kbd> Dinheiro</span>
+          <span><kbd>2</kbd> Débito</span>
+          <span><kbd>3</kbd> Crédito</span>
+          <span><kbd>4</kbd> PIX</span>
+          <span><kbd>5</kbd> Outros</span>
+        </div>
+      </div>
+
       <div class="pay-row">
         <span>Subtotal</span>
         <strong id="pay-subtotal">R$ 0,00</strong>
@@ -177,7 +175,7 @@
       <div class="pay-row pay-discount">
         <label for="pay-discount-input">Desconto (R$)</label>
         <input type="text" id="pay-discount-input" inputmode="decimal" placeholder="0,00">
-        <input type="text" id="pay-discount-reason" placeholder="motivo (obrigatorio se > 0)" maxlength="200">
+        <input type="text" id="pay-discount-reason" placeholder="motivo (se desconto > 0)" maxlength="200">
       </div>
       <div class="pay-row pay-total-row">
         <span>TOTAL</span>
@@ -210,35 +208,33 @@
   </div>
 </div>
 
-<!-- Modal cancelar venda (F8) -->
-<div id="modal-cancel" class="modal" hidden aria-modal="true" role="dialog">
-  <div class="modal-content modal-cancel">
+<!-- Cancelar venda (F8) -->
+<div id="modal-cancel" class="modal onix-modal" hidden aria-modal="true" role="dialog">
+  <div class="modal-content">
     <header class="modal-header">
-      <h2>Cancelar venda</h2>
-      <button type="button" class="btn-close" data-close="modal-cancel">x</button>
+      <h2>Cancelar cupom</h2>
+      <button type="button" class="btn-close" data-close="modal-cancel">×</button>
     </header>
     <div class="modal-body">
-      <p>Esta acao cancela a venda inteira. E registrada no log de auditoria.</p>
+      <p>Esta ação cancela a venda inteira. É registrada no log de auditoria.</p>
       <label for="cancel-motivo">Motivo:</label>
       <input type="text" id="cancel-motivo" maxlength="200" autofocus>
       <div class="modal-actions">
         <button type="button" class="btn" data-close="modal-cancel">Voltar</button>
-        <button type="button" id="cancel-ok" class="btn btn-danger">Cancelar venda</button>
+        <button type="button" id="cancel-ok" class="btn btn-danger">Cancelar cupom</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal Operacoes (F12) -->
-<div id="modal-operacoes" class="modal" hidden aria-modal="true" role="dialog">
-  <div class="modal-content modal-operacoes">
+<!-- Menu Funções (F1) — reusa modal operacoes do pdv_operacoes.js -->
+<div id="modal-operacoes" class="modal onix-modal" hidden aria-modal="true" role="dialog">
+  <div class="modal-content modal-wide">
     <header class="modal-header">
-      <h2>&#x2699; Operacoes do caixa</h2>
-      <button type="button" class="btn-close" data-close="modal-operacoes">x</button>
+      <h2>MENU FUNÇÕES</h2>
+      <button type="button" class="btn-close" data-close="modal-operacoes">×</button>
     </header>
-    <div class="modal-body" id="ops-body">
-      <!-- Preenchido pelo JS: estado atual do caixa + 4 cards de acao -->
-    </div>
+    <div class="modal-body" id="ops-body"></div>
   </div>
 </div>
 

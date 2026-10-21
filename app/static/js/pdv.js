@@ -144,30 +144,27 @@
   }
 
   function renderCurrentProduct(item) {
-    // Painel esquerdo "produto atual" (gigante).
-    // item == null => mostra "pode passar o produto" e esconde celulas zeradas
+    // Painel estilo Onix: 4 barras brancas com nome/preco/qtd/total.
+    // item == null => campos vazios + rodape "PASSE O PRODUTO"
     const nameEl = document.getElementById('current-product-name');
     const unitEl = document.getElementById('current-unit-price');
     const qtyEl = document.getElementById('current-qty');
     const totalEl = document.getElementById('current-line-total');
-    const prompt = document.getElementById('prompt-passe');
-    const pane = document.querySelector('.pdv-product-pane');
+    const actionLabel = document.getElementById('onix-action-label');
     if (!nameEl) return;
     if (!item) {
-      nameEl.textContent = '';
-      unitEl.textContent = '';
-      qtyEl.textContent = '';
-      totalEl.textContent = '';
-      if (prompt) prompt.hidden = false;
-      if (pane) pane.classList.add('pdv-pane-idle');
+      nameEl.innerHTML = '&nbsp;';
+      unitEl.innerHTML = '&nbsp;';
+      qtyEl.innerHTML = '&nbsp;';
+      totalEl.innerHTML = '&nbsp;';
+      if (actionLabel) actionLabel.textContent = 'PASSE O PRODUTO';
       return;
     }
-    nameEl.textContent = item.product_name + (item.unit && item.unit !== 'UN' ? '  ' + item.unit : '');
+    nameEl.textContent = item.product_name;
     unitEl.textContent = formatCents(item.unit_price_cents);
-    qtyEl.textContent = formatQty(item.qty_milli, item.unit);
+    qtyEl.textContent = formatQty(item.qty_milli, item.unit) + (item.unit !== 'UN' ? ' ' + item.unit : '');
     totalEl.textContent = formatCents(item.line_total_cents);
-    if (prompt) prompt.hidden = true;
-    if (pane) pane.classList.remove('pdv-pane-idle');
+    if (actionLabel) actionLabel.textContent = 'VENDA EM ANDAMENTO';
   }
 
   function renderSale() {
@@ -631,6 +628,32 @@
     renderPaymentList();
     refreshPaymentCalc();
     openModal('modal-pagamento');
+    // Fase 20: foca no primeiro input de valor pra operador digitar direto
+    setTimeout(() => {
+      const first = document.querySelector('#pay-list input[type="text"]');
+      if (first) { first.focus(); first.select(); }
+    }, 50);
+  }
+
+  // Fase 20: dentro do modal pagamento, teclas 1-5 trocam metodo do primeiro
+  // pagamento conforme a lista padrao Onix: 1-dinheiro 2-debito 3-credito 4-pix 5-outros
+  function handlePaymentModalKey(ev) {
+    const modal = document.getElementById('modal-pagamento');
+    if (!modal || modal.hidden) return;
+    if (ev.ctrlKey || ev.altKey || ev.metaKey) return;
+    if (!/^[1-5]$/.test(ev.key)) return;
+    // So dispara se foco nao esta em input (pra nao atrapalhar digitacao de valor)
+    const tag = (document.activeElement && document.activeElement.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    ev.preventDefault();
+    const methods = ['dinheiro', 'debito', 'credito', 'pix', 'outros'];
+    const method = methods[parseInt(ev.key, 10) - 1];
+    if (!method) return;
+    if (payState.payments.length) {
+      payState.payments[0].method = method;
+      renderPaymentList();
+      refreshPaymentCalc();
+    }
   }
 
   async function doFinalize(print_receipt) {
@@ -742,23 +765,108 @@
     if (ev.key !== 'Enter') return;
     const input = ev.currentTarget;
     const code = input.value.trim();
-    if (!code) return;
+    if (!code) {
+      // Fase 20: Enter com codigo vazio abre pagamento (padrao Onix).
+      ev.preventDefault();
+      openPagamento();
+      return;
+    }
     input.value = '';
     addByCode(code);
   }
 
-  function handleGlobalKey(ev) {
-    // Esc fecha modais
-    if (ev.key === 'Escape') { closeAllModals(); return; }
+  // Fase 20: F1 - MENU FUNCOES. Reusa o modal de operacoes do pdv_operacoes.js.
+  function openMenuFuncoes() {
+    if (window.PdvOperacoes && window.PdvOperacoes.open) {
+      window.PdvOperacoes.open();
+    }
+  }
 
-    // F2..F10 (teclado desktop)
+  // Fase 20: F11 - CUPOM EM TELA CHEIA (conferencia antes de pagar)
+  function openCupomCompleto() {
+    const existing = document.getElementById('modal-cupom-full');
+    if (existing) existing.remove();
+
+    const items = (currentSale && currentSale.items) || [];
+    const modal = document.createElement('div');
+    modal.id = 'modal-cupom-full';
+    modal.className = 'modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.innerHTML = ''
+      + '<div class="modal-content modal-cupom-full-content">'
+      +   '<header class="modal-header">'
+      +     '<h2>CONFERE O CUPOM</h2>'
+      +     '<button type="button" class="btn-close" aria-label="Fechar">x</button>'
+      +   '</header>'
+      +   '<div class="modal-body cupom-full-body"></div>'
+      +   '<footer class="modal-footer cupom-full-footer">'
+      +     '<span>TOTAL</span>'
+      +     '<strong class="cupom-full-total"></strong>'
+      +   '</footer>'
+      + '</div>';
+    document.body.appendChild(modal);
+
+    const body = modal.querySelector('.cupom-full-body');
+    const totalEl = modal.querySelector('.cupom-full-total');
+    if (!items.length) {
+      const p = document.createElement('p');
+      p.className = 'cupom-pane-empty';
+      p.textContent = 'Nenhum item passado ainda.';
+      body.appendChild(p);
+    } else {
+      items.forEach((it, idx) => {
+        const row = document.createElement('div');
+        row.className = 'cupom-full-row';
+        const left = document.createElement('div');
+        left.className = 'cupom-full-left';
+        const name = document.createElement('div');
+        name.className = 'cupom-full-name';
+        name.textContent = (idx + 1).toString().padStart(3, '0') + '  ' + it.product_name;
+        left.appendChild(name);
+        const sub = document.createElement('div');
+        sub.className = 'cupom-full-sub';
+        sub.textContent = formatQty(it.qty_milli, it.unit) + ' ' + it.unit + '  x  ' + formatCents(it.unit_price_cents);
+        left.appendChild(sub);
+        row.appendChild(left);
+        const right = document.createElement('div');
+        right.className = 'cupom-full-right';
+        right.textContent = formatCents(it.line_total_cents);
+        row.appendChild(right);
+        body.appendChild(row);
+      });
+    }
+    totalEl.textContent = currentSale ? formatCents(currentSale.total_cents) : 'R$ 0,00';
+
+    modal.querySelector('.btn-close').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (ev) => { if (ev.target === modal) modal.remove(); });
+  }
+
+  function anyModalOpen() {
+    return document.querySelector('.modal:not([hidden])') !== null;
+  }
+
+  function handleGlobalKey(ev) {
+    // Esc OU Tab fecha modais (padrao Onix)
+    if (ev.key === 'Escape') { closeAllModals(); return; }
+    if (ev.key === 'Tab' && anyModalOpen()) {
+      ev.preventDefault();
+      closeAllModals();
+      return;
+    }
+
+    // Teclas de funcao (Fase 20: atalhos pedidos por Gabriel)
+    if (ev.key === 'F1') { ev.preventDefault(); openMenuFuncoes(); return; }
     if (ev.key === 'F2') { ev.preventDefault(); openBusca(); return; }
-    if (ev.key === 'F3') { ev.preventDefault(); changeQtySelected(); return; }
+    if (ev.key === 'F3') { ev.preventDefault(); removeSelected(); return; }   // F3 cancela item
+    if (ev.key === 'F8') { ev.preventDefault(); openCancelModal(); return; }
+    if (ev.key === 'F10') { ev.preventDefault(); reprintLast(); return; }
+    if (ev.key === 'F11') { ev.preventDefault(); openCupomCompleto(); return; }
+
+    // F4 e F6 preservados pra compatibilidade com documentacao antiga
     if (ev.key === 'F4') { ev.preventDefault(); removeSelected(); return; }
     if (ev.key === 'F6') { ev.preventDefault(); openPagamento(); return; }
-    if (ev.key === 'F8') { ev.preventDefault(); openCancelModal(); return; }
     if (ev.key === 'F9') { ev.preventDefault(); openPreco(); return; }
-    if (ev.key === 'F10') { ev.preventDefault(); reprintLast(); return; }
     if (ev.key === 'F12') {
       ev.preventDefault();
       if (window.PdvOperacoes && window.PdvOperacoes.open) {
@@ -767,17 +875,27 @@
       return;
     }
 
-    // Ctrl+letra (alternativa para notebook, onde F2-F9 sao sobrepostos
-    // por brilho/volume/midia). Previne o default do browser.
+    // H sem modificador = consulta rapida (Fase 20).
+    // So dispara se foco nao esta em input/textarea pra nao bloquear digitacao.
+    if (ev.key.toLowerCase() === 'h' && !ev.ctrlKey && !ev.altKey && !ev.metaKey) {
+      const tag = (document.activeElement && document.activeElement.tagName || '').toLowerCase();
+      const codeEl = document.getElementById('pdv-code');
+      // Permite 'h' se nao esta digitando num campo de texto E nao esta no campo codigo com algo digitado
+      if (tag !== 'input' && tag !== 'textarea' || (document.activeElement === codeEl && !codeEl.value)) {
+        ev.preventDefault();
+        openPreco();  // reusa modal de consulta de preco
+        return;
+      }
+    }
+
+    // Ctrl+letra (atalhos de notebook preservados)
     if (ev.ctrlKey && !ev.shiftKey && !ev.altKey && !ev.metaKey) {
       const k = ev.key.toLowerCase();
       if (k === 'b') { ev.preventDefault(); openBusca(); return; }
       if (k === 'q') { ev.preventDefault(); changeQtySelected(); return; }
       if (k === 'd') { ev.preventDefault(); removeSelected(); return; }
       if (k === 'x') {
-        // Nao conflita com cortar se nao houver selecao de texto;
-        // em modais com input esse ramo nao executa (eventos param antes).
-        if (!document.querySelector('.modal:not([hidden])')) {
+        if (!anyModalOpen()) {
           ev.preventDefault(); openCancelModal(); return;
         }
       }
@@ -793,10 +911,23 @@
         return;
       }
     }
-    // Navegacao com setas na lista
-    if ((ev.key === 'ArrowUp' || ev.key === 'ArrowDown') && currentSale && currentSale.items.length) {
+    // Fase 20: Setinhas sempre navegam.
+    if (ev.key === 'ArrowUp' || ev.key === 'ArrowDown') {
+      // Se tem modal aberto, deixa o navegador cuidar (foco em elementos do modal)
+      if (anyModalOpen()) {
+        // mas se o modal tem lista com data-nav="menu", navega pelos itens
+        const list = document.querySelector('.modal:not([hidden]) [data-nav="menu"]');
+        if (list) {
+          ev.preventDefault();
+          navigateMenu(list, ev.key === 'ArrowDown' ? 1 : -1);
+          return;
+        }
+        return;
+      }
+      // Sem modal: navega itens do cupom
+      if (!currentSale || !currentSale.items.length) return;
       const codeEl = document.getElementById('pdv-code');
-      if (document.activeElement === codeEl && codeEl.value) return; // nao atrapalha digitacao
+      if (document.activeElement === codeEl && codeEl.value) return;
       ev.preventDefault();
       const n = currentSale.items.length;
       if (selectedIndex < 0) selectedIndex = 0;
@@ -806,6 +937,18 @@
       renderSale();
       return;
     }
+  }
+
+  // Fase 20: navegacao com setinhas em listas de modais (menu de funcoes etc)
+  function navigateMenu(container, direction) {
+    const items = Array.from(container.querySelectorAll('[data-menu-item]'));
+    if (!items.length) return;
+    const current = container.querySelector('[data-menu-item].selected');
+    let idx = current ? items.indexOf(current) : -1;
+    idx = (idx + direction + items.length) % items.length;
+    items.forEach(x => x.classList.remove('selected'));
+    items[idx].classList.add('selected');
+    items[idx].scrollIntoView({ block: 'nearest' });
   }
 
   function handleShortcutClick(ev) {
@@ -832,6 +975,8 @@
     // Fase 18: btn-sair pode nao existir no PDV (header mudou pra operator selector).
     const btnSair = document.getElementById('btn-sair');
     if (btnSair) btnSair.addEventListener('click', doLogout);
+    // Fase 20: atalhos numericos 1-5 pra escolher forma de pagamento no modal.
+    document.addEventListener('keydown', handlePaymentModalKey);
     document.addEventListener('keydown', handleGlobalKey);
 
     // Botoes do rodape (notebook-friendly) + Fase 19 botoes ocultos

@@ -2072,6 +2072,478 @@ html, body {
   margin-top: auto;
 }
 
+/* =====================================================================
+   FASE 20: LAYOUT ONIX MINIMALISTA + PALETA JOÃO & MARIA
+   ===================================================================== */
+
+:root {
+  /* paleta joao & maria (fundo + barras brancas estilo onix mas com cores quentes) */
+  --jm-bg-top: #f5e6d3;        /* bege claro no topo */
+  --jm-bg-bottom: #d4a574;     /* bege mais quente embaixo */
+  --jm-text: #3b2410;          /* marrom cafe escuro (texto) */
+  --jm-text-soft: #6b4a2b;     /* marrom medio */
+  --jm-ink: #0f0a05;           /* preto fosco pros valores grandes */
+  --jm-field: #ffffff;         /* barras brancas pros campos */
+  --jm-field-border: rgba(0,0,0,0.12);
+  --jm-accent: #8b1a2b;        /* vinho escuro - acao atual (rodape vermelho onix) */
+  --jm-accent-soft: #c0392b;   /* vinho mais claro */
+  --jm-status-bg: #2a1a0f;     /* marrom quase preto - barra de status */
+  --jm-status-text: #e8d4b8;   /* bege claro no texto da barra */
+}
+
+.pdv-onix {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(180deg, var(--jm-bg-top) 0%, var(--jm-bg-bottom) 100%);
+  color: var(--jm-text);
+  font-family: 'Nunito', system-ui, sans-serif;
+  min-height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Grid principal com areas nomeadas - layout fixo tipo Onix */
+.pdv-onix-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr;
+  grid-template-rows: auto auto auto 1fr auto auto;
+  grid-template-areas:
+    "produto produto cupom"
+    "unit    qty     cupom"
+    "totitem totitem cupom"
+    "code    code    cupom"
+    "logo    logo    totalbox"
+    "action  action  action"
+    "status  status  status";
+  gap: 10px 14px;
+  padding: 14px 18px 0;
+  min-height: 100vh;
+  max-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Campos (etiqueta serif + barra branca com valor dentro) */
+.onix-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.onix-field > label {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--jm-text);
+  padding-left: 4px;
+  letter-spacing: -0.3px;
+}
+
+.onix-value {
+  background: var(--jm-field);
+  border: 1px solid var(--jm-field-border);
+  border-radius: 2px;
+  padding: 8px 14px;
+  font-family: 'Courier New', monospace;
+  font-size: 28px;
+  color: var(--jm-ink);
+  min-height: 40px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.06);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Produto: barra larga, nome grande */
+.onix-field-produto { grid-area: produto; }
+.onix-field-produto .onix-value {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  font-size: 42px;
+  padding: 12px 18px;
+  min-height: 60px;
+  color: var(--jm-ink);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.onix-field-unit { grid-area: unit; }
+.onix-field-qty { grid-area: qty; }
+.onix-field-total-item {
+  grid-area: totitem;
+}
+.onix-field-total-item .onix-value {
+  background: #fff9ec;
+  color: var(--jm-accent);
+  font-weight: 700;
+}
+
+/* CUPOM (direita, barras brancas iguais aos campos) */
+.onix-cupom {
+  grid-area: cupom;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+}
+
+.onix-cupom-head {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--jm-text);
+  padding-left: 4px;
+}
+
+.onix-cupom-list {
+  background: var(--jm-field);
+  border: 1px solid var(--jm-field-border);
+  border-radius: 2px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.06);
+  flex: 1;
+  overflow-y: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  padding: 6px 0;
+  min-height: 0;
+}
+
+.onix-cupom-list .cupom-row {
+  padding: 4px 12px;
+  border-bottom: 1px dotted #e5e5e5;
+  cursor: pointer;
+}
+.onix-cupom-list .cupom-row:hover { background: #fff5e5; }
+.onix-cupom-list .cupom-row.selected {
+  background: #ffe8c7;
+  border-left: 3px solid var(--jm-accent);
+  padding-left: 9px;
+}
+.onix-cupom-list .cupom-row-top {
+  display: flex;
+  gap: 6px;
+  font-weight: 700;
+  color: var(--jm-text);
+}
+.onix-cupom-list .cupom-row-idx { color: #999; min-width: 28px; }
+.onix-cupom-list .cupom-row-name { flex: 1; }
+.onix-cupom-list .cupom-row-bot {
+  display: flex;
+  justify-content: space-between;
+  padding-left: 34px;
+  color: #777;
+  font-size: 12px;
+}
+.onix-cupom-list .cupom-row-total {
+  color: var(--jm-text);
+  font-weight: 700;
+}
+.onix-cupom-empty {
+  padding: 30px 20px;
+  text-align: center;
+  color: #aaa;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+}
+
+/* Input de código: barra branca grande centralizada */
+.onix-code-input {
+  grid-area: code;
+  background: var(--jm-field);
+  border: 2px solid var(--jm-accent);
+  border-radius: 2px;
+  padding: 14px 18px;
+  font-family: 'Courier New', monospace;
+  font-size: 22px;
+  color: var(--jm-ink);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.06), 0 0 0 0 var(--jm-accent);
+  outline: none;
+  transition: box-shadow 0.15s;
+}
+.onix-code-input:focus {
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.06), 0 0 0 3px rgba(139,26,43,0.2);
+}
+
+/* Logo + Total embaixo */
+.onix-footer-row {
+  display: contents;  /* usa as 2 celulas do grid: logo + totalbox */
+}
+
+.onix-logo-wrap {
+  grid-area: logo;
+  display: block;
+  text-decoration: none;
+  align-self: end;
+}
+.onix-logo-wrap img {
+  height: 90px;
+  width: auto;
+  display: block;
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+}
+
+.onix-total {
+  grid-area: totalbox;
+  align-self: end;
+  text-align: right;
+  padding-right: 10px;
+  padding-bottom: 6px;
+}
+.onix-total > span {
+  display: block;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 22px;
+  color: var(--jm-text);
+  margin-bottom: 2px;
+}
+.onix-total > strong {
+  display: block;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 64px;
+  font-weight: 900;
+  color: var(--jm-accent);
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+/* Rodape vermelho com nome da acao atual (estilo Onix) */
+.onix-action-bar {
+  grid-area: action;
+  background: linear-gradient(180deg, transparent 0%, rgba(139,26,43,0.08) 100%);
+  color: var(--jm-accent);
+  padding: 8px 16px;
+  text-align: center;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+}
+
+.onix-feedback {
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--jm-text-soft);
+  font-style: italic;
+}
+.onix-feedback.ok { color: #2a7f3a; }
+.onix-feedback.erro { color: var(--jm-accent); }
+
+/* Barra de status cinza embaixo */
+.onix-status-bar {
+  grid-area: status;
+  background: var(--jm-status-bg);
+  color: var(--jm-status-text);
+  padding: 6px 16px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.onix-status-bar strong { color: #fff; font-weight: 700; }
+.onix-status-spacer { flex: 1; }
+
+.onix-status-bar .operator-selector { position: relative; }
+.onix-status-bar .operator-btn {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 2px;
+  padding: 4px 10px;
+  color: #fff;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.onix-status-bar .operator-btn:hover { background: rgba(255,255,255,0.15); }
+.onix-status-bar .operator-btn strong { color: var(--jm-bg-top); }
+.onix-status-bar .operator-caret { font-size: 10px; }
+
+.onix-status-link {
+  color: var(--jm-bg-top);
+  text-decoration: none;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 2px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-family: 'Nunito', sans-serif;
+}
+.onix-status-link:hover { background: rgba(255,255,255,0.15); }
+
+/* operator menu (reposiciona pra cima pq a barra agora e embaixo) */
+.onix-status-bar .operator-menu {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  top: auto;
+  right: 0;
+  min-width: 240px;
+  background: #fff;
+  border: 1px solid var(--jm-field-border);
+  border-radius: 4px;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+  padding: 6px;
+  z-index: 100;
+  color: var(--jm-text);
+}
+
+/* Modais Onix: fundo mais sobrio */
+.onix-modal .modal-content {
+  background: #fff;
+  border: 2px solid var(--jm-accent);
+  border-radius: 4px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  color: var(--jm-text);
+}
+.onix-modal .modal-header {
+  background: var(--jm-accent);
+  color: #fff;
+  padding: 10px 16px;
+  border-bottom: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.onix-modal .modal-header h2 {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 20px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #fff;
+}
+.onix-modal .btn-close {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 18px;
+}
+.onix-modal .btn-close:hover { background: rgba(255,255,255,0.3); }
+
+.modal-wide { max-width: 640px; width: 92vw; }
+
+/* Lista numerada do modal de pagamento */
+.onix-pay-methods {
+  background: #fdf5e6;
+  padding: 10px 14px;
+  border-radius: 3px;
+  margin-bottom: 14px;
+  border: 1px dashed var(--jm-field-border);
+}
+.onix-pay-methods .hint {
+  font-size: 12px;
+  color: var(--jm-text-soft);
+  margin-bottom: 6px;
+}
+.onix-pay-methods-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+}
+.onix-pay-methods-list kbd {
+  background: var(--jm-text);
+  color: #fff;
+  padding: 1px 7px;
+  border-radius: 3px;
+  margin-right: 4px;
+  font-size: 11px;
+}
+
+/* Modal cupom em tela cheia (F11) */
+.modal-cupom-full-content {
+  max-width: 900px;
+  width: 95vw;
+  max-height: 90vh;
+}
+.cupom-full-body {
+  font-family: 'Courier New', monospace;
+  padding: 20px 30px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.cupom-full-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px dashed #ddd;
+  font-size: 18px;
+}
+.cupom-full-left { flex: 1; }
+.cupom-full-name { color: var(--jm-text); font-weight: 700; }
+.cupom-full-sub { color: #888; font-size: 14px; margin-top: 2px; }
+.cupom-full-right { color: var(--jm-text); font-weight: 700; font-size: 20px; }
+.cupom-full-footer {
+  background: var(--jm-text);
+  color: #fff;
+  padding: 16px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 20px;
+}
+.cupom-full-total {
+  color: var(--jm-bg-top);
+  font-size: 36px;
+  font-weight: 900;
+}
+
+/* Favoritos flutuantes (opcional, oculto por padrão agora) */
+.pdv-favorites-floating {
+  position: fixed;
+  bottom: 100px;
+  right: 20px;
+  z-index: 50;
+  max-width: 400px;
+  background: rgba(255,255,255,0.95);
+  padding: 10px;
+  border-radius: 6px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+/* Esconde a barra de favoritos quando o layout muda - admin ativa via config futura */
+.pdv-onix .pdv-favorites-floating {
+  display: none !important;
+}
+
+/* Esconde elementos do layout antigo que ainda podem estar renderizados */
+.pdv-onix .pdv-header-market,
+.pdv-onix .pdv-main-market,
+.pdv-onix .pdv-shortcuts-market {
+  display: none;
+}
+
+/* Menu navigation (setinhas em modais com data-nav="menu") */
+[data-menu-item].selected {
+  background: var(--jm-accent) !important;
+  color: #fff !important;
+}
+
+/* Responsivo (monitor pequeno) */
+@media (max-width: 1024px) {
+  .pdv-onix-main {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .onix-field-produto .onix-value { font-size: 32px; }
+  .onix-total > strong { font-size: 44px; }
+}
+
 .login-footer-v2 {
   margin-top: 20px;
   color: var(--pao);

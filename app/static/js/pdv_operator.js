@@ -39,11 +39,20 @@
 
   function renderCurrent() {
     const nameEl = document.getElementById('operator-name');
-    if (!nameEl) return;
-    if (currentOp) {
-      nameEl.textContent = currentOp.name.split(' ')[0]; // primeiro nome
-    } else {
-      nameEl.textContent = 'Trocar';
+    const statusEl = document.getElementById('status-oper');
+    if (nameEl) {
+      if (currentOp) {
+        nameEl.textContent = currentOp.name.split(' ')[0];
+      } else {
+        nameEl.textContent = 'Trocar operador';
+      }
+    }
+    if (statusEl) {
+      if (currentOp) {
+        statusEl.textContent = 'OPER:' + currentOp.id + ' - ' + currentOp.name.toUpperCase();
+      } else {
+        statusEl.textContent = 'OPER: nenhum';
+      }
     }
   }
 
