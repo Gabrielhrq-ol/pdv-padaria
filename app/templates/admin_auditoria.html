@@ -1,17 +1,12 @@
-{% extends "base.html" %}
+{% extends "base_nykzar.html" %}
 
-{% block title %}Auditoria - PDV Padaria{% endblock %}
+{% block title %}Auditoria · Nykzar{% endblock %}
 
 {% block body %}
 <header class="page-header">
   <h1>Auditoria do sistema</h1>
   <div class="header-actions">
-    <span class="env-badge">{{ env }}</span>
-    <span class="user-info">
-      {{ user.name }} <small>({{ user.role }})</small>
-    </span>
-    <a href="/admin" class="btn btn-sm">Painel</a>
-    <button type="button" id="btn-sair" class="btn btn-sm">Sair</button>
+    <a href="/admin" class="btn btn-sm">← Painel</a>
   </div>
 </header>
 

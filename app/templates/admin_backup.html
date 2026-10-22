@@ -1,20 +1,12 @@
-{% extends "base.html" %}
+{% extends "base_nykzar.html" %}
 
-{% block title %}Backup - PDV Padaria{% endblock %}
+{% block title %}Backup · Nykzar{% endblock %}
 
 {% block body %}
 <header class="page-header">
   <h1>Backup</h1>
   <div class="header-actions">
-    <span class="env-badge">{{ env }}</span>
-    <span class="user-info">
-      {{ user.name }} <small>({{ user.role }})</small>
-    </span>
-    <a href="/products" class="btn btn-sm">Produtos</a>
-    <a href="/admin/reports" class="btn btn-sm">Relatorios</a>
-    <a href="/admin/stock" class="btn btn-sm">Estoque</a>
-    <a href="/admin/printer" class="btn btn-sm">Impressora</a>
-    <button type="button" id="btn-sair" class="btn btn-sm">Sair</button>
+    <a href="/admin" class="btn btn-sm">← Painel</a>
   </div>
 </header>
 

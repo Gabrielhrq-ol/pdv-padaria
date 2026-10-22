@@ -1,0 +1,28 @@
+{
+  "$comment": "Config enxuta pro PDV Padaria. Projeto Python/FastAPI 100% local. NAO precisa de MCPs externos (Adobe/Canva/Figma/Gamma/Gmail/Drive/Notion/Vercel/etc) nem skills de design/marketing/web.",
+
+  "enabledPlugins": {
+    "vercel@claude-plugins-official": false,
+    "rampstack-skills@rampstack": false,
+    "superpowers@superpowers-marketplace": false
+  },
+
+  "enableAllProjectMcpServers": false,
+  "disabledMcpjsonServers": [
+    "claude_ai_Adobe_for_creativity",
+    "claude_ai_Canva",
+    "claude_ai_Claude_Docs",
+    "claude_ai_Figma",
+    "claude_ai_Gamma",
+    "claude_ai_Gmail",
+    "claude_ai_Google_Drive",
+    "claude_ai_Metricool_Social_Media_Management",
+    "claude_ai_Notion",
+    "claude_ai_vidIQ",
+    "claude_ai_Windsor_ai",
+    "vercel-token",
+    "supabase"
+  ],
+
+  "model": "claude-opus-4-7"
+}

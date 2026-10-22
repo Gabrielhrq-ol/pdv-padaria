@@ -1,0 +1,618 @@
+/* ============================================================
+   PAINEL DE GESTAO - JOAO & MARIA
+   Paleta da padaria (bege/marrom/vinho) herdada do PDV.
+   Nykzar aparece so no rodape como "powered by".
+   Sotaque: laranja #FF6B00 (variacao Nykzar que combina com o terroso).
+   ============================================================ */
+
+:root {
+  /* Herda da padaria mas adiciona --nk-accent como sotaque */
+  --jm-bg-page:       #f0dbc0;   /* bege medio pra fundo da pagina */
+  --jm-bg-card:       #fff9ef;   /* bege claro pros cards (destaque sobre o fundo) */
+  --jm-card-border:   rgba(59, 36, 16, 0.14);
+  --jm-text-main:     #3b2410;   /* marrom cafe escuro (reuso --jm-text) */
+  --jm-text-mild:     #6b4a2b;   /* marrom medio */
+  --jm-text-faint:    #8b6a4b;   /* marrom claro */
+  --jm-accent-vinho:  #8b1a2b;   /* vinho oficial da padaria */
+  --nk-accent:        #c75a1a;   /* laranja queimado - sotaque Nykzar discreto */
+  --nk-accent-soft:   rgba(199, 90, 26, 0.08);
+}
+
+body.nykzar-admin {
+  margin: 0;
+  background: linear-gradient(180deg, #f5e6d3 0%, #e8cfa8 100%);
+  background-attachment: fixed;
+  color: var(--jm-text-main);
+  font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ---------- TOPBAR (header da padaria, nao da Nykzar) ---------- */
+.nk-topbar {
+  background: rgba(255, 249, 239, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--jm-card-border);
+  box-shadow: 0 2px 12px rgba(59, 36, 16, 0.06);
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.nk-topbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--jm-text-main);
+}
+.nk-topbar-logo img {
+  height: 60px;
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 1px 3px rgba(59, 36, 16, 0.15));
+}
+.nk-topbar-logo .nk-brand-name {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--jm-text-main);
+  line-height: 1.1;
+}
+.nk-topbar-logo .nk-brand-sub {
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px;
+  color: var(--jm-text-mild);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nk-topbar-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--jm-card-border);
+}
+
+.nk-topbar-context {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.1;
+}
+.nk-topbar-context .nk-ctx-label {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--jm-text-faint);
+}
+.nk-topbar-context .nk-ctx-value {
+  font-size: 13px;
+  color: var(--jm-text-main);
+  font-weight: 700;
+}
+
+.nk-topbar-spacer { flex: 1; }
+
+.nk-topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--jm-text-mild);
+}
+.nk-topbar-user strong { color: var(--jm-text-main); font-weight: 700; }
+.nk-topbar-user small { color: var(--jm-text-faint); font-weight: 400; }
+
+.nk-topbar-actions { display: flex; gap: 8px; align-items: center; }
+
+/* ---------- PAGE HEADER (titulo da pagina) ---------- */
+body.nykzar-admin .page-header {
+  background: transparent;
+  padding: 22px 28px 10px;
+  border-bottom: none;
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+body.nykzar-admin .page-header h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 900;
+  font-size: 36px;
+  letter-spacing: -0.5px;
+  color: var(--jm-text-main);
+  margin: 0;
+}
+
+body.nykzar-admin .page-header h1::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 28px;
+  background: var(--jm-accent-vinho);
+  margin-right: 14px;
+  vertical-align: middle;
+  transform: translateY(-2px);
+  border-radius: 1px;
+}
+
+body.nykzar-admin .page-header .header-actions,
+body.nykzar-admin .page-header > div:last-child {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-left: auto;
+}
+
+body.nykzar-admin .env-badge {
+  background: rgba(199, 90, 26, 0.12);
+  color: var(--nk-accent);
+  border: 1px solid rgba(199, 90, 26, 0.3);
+  padding: 2px 10px;
+  border-radius: 3px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+body.nykzar-admin .user-info {
+  color: var(--jm-text-mild);
+  font-size: 13px;
+}
+body.nykzar-admin .user-info small { color: var(--jm-text-faint); }
+
+/* ---------- CONTAINER ---------- */
+body.nykzar-admin .container,
+body.nykzar-admin .admin-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 10px 28px 40px;
+}
+
+/* ---------- CARDS ---------- */
+body.nykzar-admin .card,
+body.nykzar-admin section.card {
+  background: var(--jm-bg-card);
+  border: 1px solid var(--jm-card-border);
+  border-radius: 6px;
+  padding: 22px 26px;
+  margin-bottom: 18px;
+  box-shadow: 0 1px 3px rgba(59, 36, 16, 0.05), 0 4px 20px rgba(59, 36, 16, 0.04);
+}
+
+body.nykzar-admin .card h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--jm-text-main);
+  margin: 0 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--jm-card-border);
+  position: relative;
+}
+body.nykzar-admin .card h2::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 38px;
+  height: 2px;
+  background: var(--jm-accent-vinho);
+}
+
+body.nykzar-admin .panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+body.nykzar-admin .panel-head h2 { margin: 0 0 0; border-bottom: none; padding-bottom: 0; }
+body.nykzar-admin .panel-head h2::after { display: none; }
+
+/* ---------- DASHBOARD GRID ---------- */
+body.nykzar-admin .dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+body.nykzar-admin .dashboard-card {
+  background: #fffdf8;
+  border: 1px solid var(--jm-card-border);
+  border-left: 3px solid var(--jm-accent-vinho);
+  border-radius: 4px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+body.nykzar-admin .dashboard-card:hover {
+  box-shadow: 0 4px 14px rgba(59, 36, 16, 0.08);
+  transform: translateY(-1px);
+}
+
+body.nykzar-admin .dash-label {
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--jm-text-faint);
+}
+
+body.nykzar-admin .dash-value {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 900;
+  font-size: 30px;
+  color: var(--jm-text-main);
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+
+body.nykzar-admin .dashboard-card small {
+  color: var(--jm-text-mild);
+  font-size: 11px;
+}
+body.nykzar-admin .dashboard-card small.hint { color: var(--jm-text-faint); }
+
+/* ---------- SHORTCUT GRID ---------- */
+body.nykzar-admin .shortcut-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+body.nykzar-admin .shortcut {
+  background: #fffdf8;
+  border: 1px solid var(--jm-card-border);
+  border-radius: 4px;
+  padding: 18px 20px;
+  text-decoration: none;
+  color: var(--jm-text-main);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: all 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+body.nykzar-admin .shortcut::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 0;
+  background: var(--jm-accent-vinho);
+  transition: height 0.2s ease;
+}
+body.nykzar-admin .shortcut:hover {
+  border-color: var(--jm-accent-vinho);
+  background: #fffbf0;
+  transform: translateX(2px);
+  box-shadow: 0 2px 10px rgba(139, 26, 43, 0.1);
+}
+body.nykzar-admin .shortcut:hover::before { height: 100%; }
+
+body.nykzar-admin .shortcut strong {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--jm-accent-vinho);
+}
+body.nykzar-admin .shortcut span {
+  color: var(--jm-text-mild);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* ---------- BOTOES ---------- */
+body.nykzar-admin .btn {
+  background: #fffdf8;
+  color: var(--jm-text-main);
+  border: 1px solid var(--jm-card-border);
+  padding: 7px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.12s;
+  line-height: 1.4;
+}
+body.nykzar-admin .btn:hover {
+  border-color: var(--jm-accent-vinho);
+  color: var(--jm-accent-vinho);
+  background: #fff5e5;
+}
+
+body.nykzar-admin .btn-primary {
+  background: var(--jm-accent-vinho);
+  color: #fff;
+  border-color: var(--jm-accent-vinho);
+  font-weight: 700;
+}
+body.nykzar-admin .btn-primary:hover {
+  background: #6f1322;
+  border-color: #6f1322;
+  color: #fff;
+}
+
+body.nykzar-admin .btn-danger {
+  background: transparent;
+  color: var(--jm-accent-vinho);
+  border-color: rgba(139, 26, 43, 0.4);
+}
+body.nykzar-admin .btn-danger:hover {
+  background: rgba(139, 26, 43, 0.08);
+  border-color: var(--jm-accent-vinho);
+}
+
+body.nykzar-admin .btn-sm { padding: 4px 10px; font-size: 11px; }
+body.nykzar-admin .btn-warn {
+  background: rgba(199, 90, 26, 0.1);
+  color: var(--nk-accent);
+  border-color: rgba(199, 90, 26, 0.4);
+}
+body.nykzar-admin .btn-warn:hover { background: rgba(199, 90, 26, 0.18); }
+
+/* ---------- TABELAS ---------- */
+body.nykzar-admin table,
+body.nykzar-admin .table-produtos {
+  width: 100%;
+  border-collapse: collapse;
+  background: transparent;
+  color: var(--jm-text-main);
+}
+body.nykzar-admin table th,
+body.nykzar-admin .table-produtos th {
+  text-align: left;
+  padding: 10px 12px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--jm-text-mild);
+  border-bottom: 2px solid var(--jm-card-border);
+  background: rgba(59, 36, 16, 0.04);
+}
+body.nykzar-admin table td,
+body.nykzar-admin .table-produtos td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--jm-card-border);
+  color: var(--jm-text-main);
+  font-size: 13px;
+}
+body.nykzar-admin table tr:hover td,
+body.nykzar-admin .table-produtos tr:hover td {
+  background: rgba(139, 26, 43, 0.03);
+}
+body.nykzar-admin .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---------- FORMS / INPUTS ---------- */
+body.nykzar-admin input[type="text"],
+body.nykzar-admin input[type="number"],
+body.nykzar-admin input[type="search"],
+body.nykzar-admin input[type="password"],
+body.nykzar-admin input[type="email"],
+body.nykzar-admin input[type="date"],
+body.nykzar-admin select,
+body.nykzar-admin textarea {
+  background: #fff;
+  color: var(--jm-text-main);
+  border: 1px solid var(--jm-card-border);
+  padding: 8px 12px;
+  border-radius: 3px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
+  width: 100%;
+  box-sizing: border-box;
+}
+body.nykzar-admin input:focus,
+body.nykzar-admin select:focus,
+body.nykzar-admin textarea:focus {
+  border-color: var(--jm-accent-vinho);
+  box-shadow: 0 0 0 2px rgba(139, 26, 43, 0.15);
+}
+body.nykzar-admin label {
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--jm-text-mild);
+  display: block;
+  margin-bottom: 4px;
+}
+body.nykzar-admin .hint {
+  color: var(--jm-text-faint);
+  font-size: 11px;
+}
+
+/* ---------- ALERTAS / FEEDBACK ---------- */
+body.nykzar-admin .feedback {
+  padding: 12px 16px;
+  border-radius: 3px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  border-left: 3px solid var(--jm-accent-vinho);
+  background: rgba(139, 26, 43, 0.05);
+  color: var(--jm-text-main);
+}
+body.nykzar-admin .feedback.erro {
+  border-left-color: #c0392b;
+  background: rgba(192, 57, 43, 0.08);
+  color: #7a1b14;
+}
+body.nykzar-admin .feedback:empty { display: none; }
+
+body.nykzar-admin .alerts-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+body.nykzar-admin .alerts-list li {
+  background: rgba(199, 90, 26, 0.08);
+  border-left: 3px solid var(--nk-accent);
+  padding: 10px 14px;
+  border-radius: 3px;
+  color: var(--jm-text-main);
+  font-size: 13px;
+}
+
+body.nykzar-admin .empty-state {
+  text-align: center;
+  color: var(--jm-text-faint);
+  padding: 32px 20px;
+  font-style: italic;
+  font-size: 13px;
+}
+
+/* ---------- MODAIS ---------- */
+body.nykzar-admin .modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(59, 36, 16, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 60px 20px;
+  z-index: 1000;
+  overflow-y: auto;
+}
+body.nykzar-admin .modal[hidden] { display: none; }
+body.nykzar-admin .modal-content {
+  background: #fffdf8;
+  border: 1px solid var(--jm-card-border);
+  border-top: 3px solid var(--jm-accent-vinho);
+  border-radius: 4px;
+  max-width: 560px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  color: var(--jm-text-main);
+}
+body.nykzar-admin .modal-header {
+  background: rgba(59, 36, 16, 0.04);
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--jm-card-border);
+}
+body.nykzar-admin .modal-header h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--jm-accent-vinho);
+  margin: 0;
+}
+body.nykzar-admin .btn-close {
+  background: transparent;
+  color: var(--jm-text-mild);
+  border: 1px solid var(--jm-card-border);
+  width: 28px;
+  height: 28px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+body.nykzar-admin .btn-close:hover {
+  color: var(--jm-accent-vinho);
+  border-color: var(--jm-accent-vinho);
+}
+body.nykzar-admin .modal-body { padding: 20px; }
+body.nykzar-admin .modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--jm-card-border);
+}
+
+/* ---------- RODAPE DISCRETO "powered by Nykzar" ---------- */
+.nk-footer {
+  margin-top: 30px;
+  padding: 14px 28px 20px;
+  text-align: center;
+  font-family: 'Nunito', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--jm-text-faint);
+  opacity: 0.7;
+}
+.nk-footer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: var(--jm-text-faint);
+}
+.nk-footer-brand:hover { color: var(--nk-accent); }
+.nk-footer-brand img {
+  height: 14px;
+  width: auto;
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+.nk-footer-brand:hover img { opacity: 1; }
+
+/* ---------- UTIL (badges / tags) ---------- */
+body.nykzar-admin .badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+body.nykzar-admin .badge-ok      { background: rgba(42, 127, 58, 0.12);   color: #2a7f3a; border: 1px solid rgba(42,127,58,0.3); }
+body.nykzar-admin .badge-erro    { background: rgba(192, 57, 43, 0.12);   color: #a51e1e; border: 1px solid rgba(192,57,43,0.3); }
+body.nykzar-admin .badge-warn    { background: rgba(199, 90, 26, 0.12);   color: var(--nk-accent); border: 1px solid rgba(199,90,26,0.3); }
+body.nykzar-admin .badge-neutral { background: rgba(59, 36, 16, 0.06);    color: var(--jm-text-mild); border: 1px solid var(--jm-card-border); }
+
+/* ---------- LINK DEFAULT ---------- */
+body.nykzar-admin a { color: var(--jm-accent-vinho); }
+body.nykzar-admin a:hover { color: var(--nk-accent); }
+
+/* ---------- SCROLLBAR (webkit) ---------- */
+body.nykzar-admin ::-webkit-scrollbar { width: 10px; height: 10px; }
+body.nykzar-admin ::-webkit-scrollbar-track { background: rgba(59,36,16,0.04); }
+body.nykzar-admin ::-webkit-scrollbar-thumb { background: rgba(139,26,43,0.3); border-radius: 2px; }
+body.nykzar-admin ::-webkit-scrollbar-thumb:hover { background: var(--jm-accent-vinho); }
+
+/* ---------- MOBILE ---------- */
+@media (max-width: 768px) {
+  body.nykzar-admin .page-header h1 { font-size: 26px; }
+  body.nykzar-admin .page-header h1::before { height: 22px; width: 5px; margin-right: 10px; }
+  body.nykzar-admin .nk-topbar { padding: 8px 14px; gap: 12px; flex-wrap: wrap; }
+  body.nykzar-admin .nk-topbar-logo img { height: 40px; }
+  body.nykzar-admin .nk-topbar-logo .nk-brand-name { font-size: 17px; }
+  body.nykzar-admin .container,
+  body.nykzar-admin .admin-container { padding: 10px 16px 30px; }
+}

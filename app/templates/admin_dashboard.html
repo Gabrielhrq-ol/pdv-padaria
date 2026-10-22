@@ -1,18 +1,10 @@
-{% extends "base.html" %}
+{% extends "base_nykzar.html" %}
 
-{% block title %}Painel Admin - PDV Padaria{% endblock %}
+{% block title %}Painel · Nykzar{% endblock %}
 
 {% block body %}
 <header class="page-header">
   <h1>Painel do dono</h1>
-  <div class="header-actions">
-    <span class="env-badge">{{ env }}</span>
-    <span class="user-info">
-      {{ user.name }} <small>({{ user.role }})</small>
-    </span>
-    <a href="/pdv" class="btn btn-primary">Operar caixa</a>
-    <button type="button" id="btn-sair" class="btn btn-sm">Sair</button>
-  </div>
 </header>
 
 <main class="container admin-container">

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 248 56" width="248" height="56">
+  <title>NYKZAR</title>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@800&amp;display=swap');
+      .wordmark {
+        font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+        font-weight: 800;
+        font-size: 34px;
+        letter-spacing: 0.1em;
+      }
+    </style>
+  </defs>
+  <!-- Marca -->
+  <rect width="56" height="56" rx="10" fill="#0F0D21"/>
+  <path d="M 13,43 L 13,13 L 43,43 L 43,13"
+        stroke="#F2F0FF" stroke-width="8" fill="none"
+        stroke-linecap="butt" stroke-linejoin="miter"/>
+  <line x1="13" y1="13" x2="43" y2="43"
+        stroke="#CCFF00" stroke-width="8.5"/>
+  <!-- Wordmark -->
+  <text x="74" y="40" class="wordmark" fill="#F2F0FF">NYKZAR</text>
+</svg>

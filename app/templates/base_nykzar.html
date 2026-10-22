@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>{% block title %}Painel · João &amp; Maria{% endblock %}</title>
+  <link rel="icon" type="image/png" href="/static/img/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/pdv.css">
+  <link rel="stylesheet" href="/static/css/admin_nykzar.css">
+  {% block head %}{% endblock %}
+</head>
+<body class="nykzar-admin {% block body_class %}{% endblock %}">
+  <nav class="nk-topbar">
+    <a href="/admin" class="nk-topbar-logo" aria-label="Painel João & Maria">
+      <img src="/static/img/logo.png" alt="João &amp; Maria">
+    </a>
+    <div class="nk-topbar-spacer"></div>
+    {% if user %}
+    <div class="nk-topbar-user">
+      <strong>{{ user.name }}</strong>
+      <small>({{ user.role }})</small>
+    </div>
+    {% endif %}
+    {% if env %}
+    <span class="env-badge">{{ env }}</span>
+    {% endif %}
+    <div class="nk-topbar-actions">
+      <a href="/pdv" class="btn">Ir pro PDV</a>
+      {% if user %}
+      <button type="button" id="btn-sair" class="btn btn-sm">Sair</button>
+      {% endif %}
+    </div>
+  </nav>
+
+  {% block body %}{% endblock %}
+
+  <footer class="nk-footer">
+    Sistema desenvolvido por
+    <a href="#" class="nk-footer-brand" title="Nykzar - Software sob medida">
+      <img src="/static/img/nykzar-logo-lime.svg" alt="Nykzar">
+    </a>
+  </footer>
+</body>
+</html>
