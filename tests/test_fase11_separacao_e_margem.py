@@ -125,8 +125,9 @@ class TestPaginaAdmin:
     def test_admin_acessa(self, admin_client: TestClient) -> None:
         r = admin_client.get("/admin")
         assert r.status_code == 200
-        assert "Painel do dono" in r.text
-        assert "Margem bruta" in r.text
+        # Smoke: elementos-chave do dashboard admin v2 (bento + margens)
+        assert "Em caixa hoje" in r.text
+        assert "Melhores margens hoje" in r.text
 
     def test_caixa_redireciona(self, caixa_client: TestClient) -> None:
         r = caixa_client.get("/admin", follow_redirects=False)

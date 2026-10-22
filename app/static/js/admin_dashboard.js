@@ -77,7 +77,8 @@
 
   async function loadAlerts() {
     const list = document.getElementById('alerts-list');
-    const card = document.getElementById('alerts-card');
+    const count = document.getElementById('alerts-count');
+    const empty = document.getElementById('alerts-empty');
     clearNode(list);
 
     const items = [];
@@ -85,10 +86,12 @@
     try {
       const low = await fetchJson(API_LOW);
       if (low && low.length) {
+        const nome = low.length === 1 ? low[0].product_name : low.length + ' produtos';
         items.push({
-          text: low.length + ' produto(s) com estoque abaixo do minimo',
+          text: low.length === 1
+            ? nome.toLowerCase() + ' acabando'
+            : nome + ' com estoque baixo',
           href: '/admin/stock',
-          cls: 'badge-perda',
         });
       }
     } catch (_) {}
@@ -99,36 +102,39 @@
       const failed = recent.find(h => h.action === 'backup_failed' || h.action === 'backup_skipped');
       if (failed) {
         items.push({
-          text: 'Backup recente teve problema (' + failed.action + ')',
+          text: 'último backup falhou',
           href: '/admin/backup',
-          cls: 'badge-perda',
         });
       } else if (recent.length === 0) {
         items.push({
-          text: 'Nenhum backup executado ainda',
+          text: 'ainda sem backup rodando',
           href: '/admin/backup',
-          cls: 'badge-ajuste',
         });
       }
     } catch (_) {}
 
-    if (!items.length) {
-      card.hidden = true;
-      return;
-    }
-    card.hidden = false;
+    count.textContent = items.length;
+    count.classList.toggle('zero', items.length === 0);
+    empty.hidden = items.length > 0;
+    list.hidden = items.length === 0;
+
     items.forEach(it => {
       const li = document.createElement('li');
-      const badge = document.createElement('span');
-      badge.className = 'badge ' + it.cls;
-      badge.textContent = 'ALERTA';
-      li.appendChild(badge);
       const link = document.createElement('a');
       link.href = it.href;
       link.textContent = it.text;
       li.appendChild(link);
       list.appendChild(li);
     });
+  }
+
+  function formatTodayHeader() {
+    const el = document.getElementById('today-date');
+    if (!el) return;
+    const dias = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+    const meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+    const d = new Date();
+    el.textContent = dias[d.getDay()] + ' · ' + d.getDate() + ' de ' + meses[d.getMonth()];
   }
 
   async function loadMargins() {
@@ -189,7 +195,9 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('btn-sair').addEventListener('click', doLogout);
+    const btnSair = document.getElementById('btn-sair');
+    if (btnSair) btnSair.addEventListener('click', doLogout);
+    formatTodayHeader();
     loadDashboard();
     loadAlerts();
     loadMargins();

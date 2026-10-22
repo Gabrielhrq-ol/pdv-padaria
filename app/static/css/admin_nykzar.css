@@ -600,6 +600,378 @@ body.nykzar-admin .badge-neutral { background: rgba(59, 36, 16, 0.06);    color:
 body.nykzar-admin a { color: var(--jm-accent-vinho); }
 body.nykzar-admin a:hover { color: var(--nk-accent); }
 
+/* ============================================================
+   DASHBOARD V2 — bento + hierarquia proper
+   ============================================================ */
+
+/* Primeira dobra: um titulo "HOJE" com data a direita, zero chrome */
+body.nykzar-admin .today-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 10px 2px 18px;
+  border-bottom: 1px solid var(--jm-card-border);
+  margin-bottom: 20px;
+}
+body.nykzar-admin .today-head h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 900;
+  font-size: 44px;
+  color: var(--jm-text-main);
+  letter-spacing: -1px;
+  margin: 0;
+  line-height: 1;
+}
+body.nykzar-admin .today-head h1::before { display: none; }
+body.nykzar-admin .today-date {
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--jm-text-faint);
+}
+
+/* Bento 2-col: KPI principal (grande) + lateral (pequenos empilhados) */
+body.nykzar-admin .bento {
+  display: grid;
+  grid-template-columns: 1.65fr 1fr;
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+/* HERO KPI: numero gigante, nada mais compete */
+body.nykzar-admin .kpi-hero {
+  background: var(--jm-bg-card);
+  border: 1px solid var(--jm-card-border);
+  border-left: 4px solid var(--jm-accent-vinho);
+  border-radius: 6px;
+  padding: 24px 28px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 220px;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(59, 36, 16, 0.05), 0 10px 30px rgba(59, 36, 16, 0.06);
+}
+body.nykzar-admin .kpi-hero-label {
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--jm-text-faint);
+}
+body.nykzar-admin .kpi-hero-value {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 900;
+  font-size: 72px;
+  color: var(--jm-text-main);
+  letter-spacing: -2px;
+  line-height: 0.95;
+  margin: 6px 0 12px;
+  font-variant-numeric: tabular-nums;
+}
+body.nykzar-admin .kpi-hero-foot {
+  display: flex;
+  gap: 24px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--jm-card-border);
+}
+body.nykzar-admin .kpi-hero-foot > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+body.nykzar-admin .kpi-foot-label {
+  font-family: 'Nunito', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--jm-text-faint);
+}
+body.nykzar-admin .kpi-foot-value {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--jm-text-main);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+body.nykzar-admin .kpi-foot-value .pct {
+  font-size: 13px;
+  color: var(--jm-text-mild);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+/* Mini-KPIs empilhados na coluna lateral */
+body.nykzar-admin .kpi-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+body.nykzar-admin .kpi-mini {
+  background: var(--jm-bg-card);
+  border: 1px solid var(--jm-card-border);
+  border-radius: 6px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  box-shadow: 0 1px 3px rgba(59, 36, 16, 0.04);
+}
+body.nykzar-admin .kpi-mini-value {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 900;
+  font-size: 32px;
+  color: var(--jm-text-main);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+}
+body.nykzar-admin .kpi-mini-label {
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--jm-text-faint);
+  margin-top: 2px;
+}
+body.nykzar-admin .kpi-mini-sub {
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  color: var(--jm-text-mild);
+  margin-top: 2px;
+}
+
+/* Card de avisos (nao-numerico, lista pequena) */
+body.nykzar-admin .kpi-mini.alerts { padding: 14px 18px 16px; }
+body.nykzar-admin .alerts-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+body.nykzar-admin .alerts-count {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 900;
+  font-size: 28px;
+  color: var(--nk-accent);
+  line-height: 1;
+}
+body.nykzar-admin .alerts-count.zero { color: var(--jm-text-faint); }
+body.nykzar-admin .alerts-head .kpi-mini-label { margin-top: 0; }
+body.nykzar-admin .alerts-ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+body.nykzar-admin .alerts-ul li {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: var(--jm-text-main);
+  font-size: 12px;
+  line-height: 1.4;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+body.nykzar-admin .alerts-ul li::before {
+  content: '•';
+  color: var(--nk-accent);
+  font-weight: 900;
+  flex-shrink: 0;
+}
+body.nykzar-admin .alerts-ul li a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px dotted transparent;
+  transition: border-color 0.1s;
+}
+body.nykzar-admin .alerts-ul li a:hover { border-bottom-color: var(--nk-accent); color: var(--nk-accent); }
+body.nykzar-admin .alerts-empty {
+  color: var(--jm-text-faint);
+  font-size: 12px;
+  font-style: italic;
+  margin: 2px 0 0;
+}
+
+/* Eyebrow: pequeno titulo de secao sem card ao redor */
+body.nykzar-admin .eyebrow {
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--jm-text-mild);
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+body.nykzar-admin .eyebrow::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--jm-card-border);
+}
+
+/* HERO SHORTCUTS: 3 cards grandes pros atalhos diarios */
+body.nykzar-admin .hero-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+}
+body.nykzar-admin .hero-shortcut {
+  background: var(--jm-bg-card);
+  border: 1px solid var(--jm-card-border);
+  border-radius: 6px;
+  padding: 24px 24px 22px;
+  text-decoration: none;
+  color: var(--jm-text-main);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.15s ease;
+  min-height: 118px;
+  box-shadow: 0 1px 3px rgba(59, 36, 16, 0.05);
+}
+body.nykzar-admin .hero-shortcut::after {
+  content: '→';
+  position: absolute;
+  top: 20px;
+  right: 22px;
+  font-size: 18px;
+  color: var(--jm-text-faint);
+  transition: all 0.15s ease;
+}
+body.nykzar-admin .hero-shortcut:hover {
+  border-color: var(--jm-accent-vinho);
+  box-shadow: 0 4px 20px rgba(139, 26, 43, 0.12);
+  transform: translateY(-2px);
+}
+body.nykzar-admin .hero-shortcut:hover::after {
+  color: var(--jm-accent-vinho);
+  transform: translateX(4px);
+}
+body.nykzar-admin .hero-shortcut strong {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  font-size: 26px;
+  color: var(--jm-text-main);
+  line-height: 1;
+  letter-spacing: -0.3px;
+}
+body.nykzar-admin .hero-shortcut em {
+  font-style: normal;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  color: var(--jm-text-mild);
+  font-weight: 500;
+  margin-top: 10px;
+}
+body.nykzar-admin .hero-shortcut .count {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--jm-accent-vinho);
+  margin-top: 4px;
+}
+
+/* Chips: atalhos secundarios inline (semanal) */
+body.nykzar-admin .chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+body.nykzar-admin .chip {
+  background: var(--jm-bg-card);
+  border: 1px solid var(--jm-card-border);
+  border-radius: 20px;
+  padding: 8px 18px;
+  text-decoration: none;
+  color: var(--jm-text-main);
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  transition: all 0.12s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+body.nykzar-admin .chip:hover {
+  background: var(--jm-accent-vinho);
+  border-color: var(--jm-accent-vinho);
+  color: #fff;
+}
+
+/* Links de config: menores ainda, com separador */
+body.nykzar-admin .config-row {
+  display: flex;
+  gap: 0;
+  margin-bottom: 36px;
+  padding: 10px 0;
+  flex-wrap: wrap;
+}
+body.nykzar-admin .config-row a {
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--jm-text-mild);
+  text-decoration: none;
+  padding: 4px 14px;
+  letter-spacing: 0.04em;
+  border-right: 1px solid var(--jm-card-border);
+  transition: color 0.12s;
+}
+body.nykzar-admin .config-row a:first-child { padding-left: 2px; }
+body.nykzar-admin .config-row a:last-child { border-right: none; }
+body.nykzar-admin .config-row a:hover { color: var(--jm-accent-vinho); }
+
+/* Tabela de margens: card com estilo mais limpo (sem h2 border) */
+body.nykzar-admin .margins-card {
+  background: var(--jm-bg-card);
+  border: 1px solid var(--jm-card-border);
+  border-radius: 6px;
+  padding: 20px 22px;
+  box-shadow: 0 1px 3px rgba(59, 36, 16, 0.05);
+}
+body.nykzar-admin .margins-card .panel-head { margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--jm-card-border); }
+body.nykzar-admin .margins-card .panel-head h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  font-size: 18px;
+  margin: 0;
+  color: var(--jm-text-main);
+}
+body.nykzar-admin .margins-card .panel-head h2::after { display: none; }
+
+/* Responsivo: bento colapsa, hero vira coluna, chips se mantem */
+@media (max-width: 900px) {
+  body.nykzar-admin .bento { grid-template-columns: 1fr; }
+  body.nykzar-admin .kpi-hero-value { font-size: 56px; }
+  body.nykzar-admin .hero-shortcuts { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  body.nykzar-admin .today-head h1 { font-size: 32px; }
+  body.nykzar-admin .kpi-hero-value { font-size: 44px; letter-spacing: -1px; }
+  body.nykzar-admin .kpi-mini-value { font-size: 26px; }
+}
+
 /* ---------- SCROLLBAR (webkit) ---------- */
 body.nykzar-admin ::-webkit-scrollbar { width: 10px; height: 10px; }
 body.nykzar-admin ::-webkit-scrollbar-track { background: rgba(59,36,16,0.04); }
