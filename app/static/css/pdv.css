@@ -472,22 +472,8 @@ html, body {
   font-size: 15px;
 }
 
-#pdv-code {
-  flex: 1;
-  padding: 10px 12px;
-  font-size: 20px;
-  font-family: 'Consolas', 'Courier New', monospace;
-  border: 2px solid #2a4273;
-  background: #0f1a2e;
-  color: #ffcf33;
-  border-radius: 4px;
-  outline: none;
-}
-
-#pdv-code:focus {
-  border-color: #ffcf33;
-  box-shadow: 0 0 0 2px rgba(255, 207, 51, 0.3);
-}
+/* Regra legacy do PDV azul navy foi removida. O input #pdv-code agora
+   carrega a classe .onix-code-input (barra branca com borda vinho), ver bloco Onix no fim do arquivo. */
 
 .pdv-feedback {
   min-width: 180px;
@@ -2106,7 +2092,14 @@ html, body {
 .pdv-onix-main {
   display: grid;
   grid-template-columns: 1fr 1fr 1.2fr;
-  grid-template-rows: auto auto auto 1fr auto auto;
+  grid-template-rows:
+    minmax(60px, 1.1fr)    /* produto */
+    minmax(54px, 0.9fr)    /* unit/qty */
+    minmax(54px, 0.9fr)    /* totitem */
+    minmax(44px, 0.55fr)   /* code input */
+    minmax(150px, 2fr)     /* logo + total (logo transparente, cabe maior) */
+    auto                   /* action */
+    auto;                  /* status */
   grid-template-areas:
     "produto produto cupom"
     "unit    qty     cupom"
@@ -2115,11 +2108,11 @@ html, body {
     "logo    logo    totalbox"
     "action  action  action"
     "status  status  status";
-  gap: 10px 14px;
-  padding: 14px 18px 0;
-  min-height: 100vh;
-  max-height: 100vh;
+  gap: 6px 12px;
+  padding: 8px 14px 0;
+  height: 100vh;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* Campos (etiqueta serif + barra branca com valor dentro) */
@@ -2127,30 +2120,35 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-height: 0;
 }
 
 .onix-field > label {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--jm-text);
   padding-left: 4px;
   letter-spacing: -0.3px;
+  line-height: 1;
 }
 
 .onix-value {
   background: var(--jm-field);
   border: 1px solid var(--jm-field-border);
   border-radius: 2px;
-  padding: 8px 14px;
+  padding: 6px 14px;
   font-family: 'Courier New', monospace;
   font-size: 28px;
   color: var(--jm-ink);
-  min-height: 40px;
+  flex: 1;
+  display: flex;
+  align-items: center;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.06);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-height: 0;
 }
 
 /* Produto: barra larga, nome grande */
@@ -2158,9 +2156,8 @@ html, body {
 .onix-field-produto .onix-value {
   font-family: 'Playfair Display', Georgia, serif;
   font-weight: 700;
-  font-size: 42px;
-  padding: 12px 18px;
-  min-height: 60px;
+  font-size: 40px;
+  padding: 8px 18px;
   color: var(--jm-ink);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -2188,10 +2185,11 @@ html, body {
 
 .onix-cupom-head {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 20px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--jm-text);
   padding-left: 4px;
+  line-height: 1;
 }
 
 .onix-cupom-list {
@@ -2251,13 +2249,15 @@ html, body {
   background: var(--jm-field);
   border: 2px solid var(--jm-accent);
   border-radius: 2px;
-  padding: 14px 18px;
+  padding: 10px 16px;
   font-family: 'Courier New', monospace;
-  font-size: 22px;
+  font-size: 20px;
   color: var(--jm-ink);
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.06), 0 0 0 0 var(--jm-accent);
   outline: none;
   transition: box-shadow 0.15s;
+  align-self: stretch;
+  min-height: 0;
 }
 .onix-code-input:focus {
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.06), 0 0 0 3px rgba(139,26,43,0.2);
@@ -2275,31 +2275,31 @@ html, body {
   align-self: end;
 }
 .onix-logo-wrap img {
-  height: 90px;
+  height: 140px;
   width: auto;
   display: block;
-  border-radius: 6px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  filter: drop-shadow(0 2px 6px rgba(59, 36, 16, 0.25));
 }
 
 .onix-total {
   grid-area: totalbox;
   align-self: end;
   text-align: right;
-  padding-right: 10px;
-  padding-bottom: 6px;
+  padding-right: 8px;
+  padding-bottom: 4px;
 }
 .onix-total > span {
   display: block;
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 22px;
+  font-size: 20px;
   color: var(--jm-text);
   margin-bottom: 2px;
+  line-height: 1;
 }
 .onix-total > strong {
   display: block;
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 64px;
+  font-size: 60px;
   font-weight: 900;
   color: var(--jm-accent);
   line-height: 1;
@@ -2309,19 +2309,19 @@ html, body {
 /* Rodape vermelho com nome da acao atual (estilo Onix) */
 .onix-action-bar {
   grid-area: action;
-  background: linear-gradient(180deg, transparent 0%, rgba(139,26,43,0.08) 100%);
+  background: linear-gradient(180deg, transparent 0%, rgba(139,26,43,0.12) 100%);
   color: var(--jm-accent);
-  padding: 8px 16px;
+  padding: 7px 14px;
   text-align: center;
   font-family: 'Playfair Display', Georgia, serif;
   font-weight: 700;
-  font-size: 20px;
-  letter-spacing: 2px;
+  font-size: 18px;
+  letter-spacing: 1.8px;
   text-transform: uppercase;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 24px;
+  gap: 20px;
 }
 
 .onix-feedback {
@@ -2341,12 +2341,12 @@ html, body {
   grid-area: status;
   background: var(--jm-status-bg);
   color: var(--jm-status-text);
-  padding: 6px 16px;
+  padding: 4px 14px;
   font-family: 'Courier New', monospace;
-  font-size: 12px;
+  font-size: 11px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 .onix-status-bar strong { color: #fff; font-weight: 700; }
 .onix-status-spacer { flex: 1; }
@@ -2535,13 +2535,40 @@ html, body {
   color: #fff !important;
 }
 
-/* Responsivo (monitor pequeno) */
+/* Responsivo (monitor pequeno em largura) */
 @media (max-width: 1024px) {
   .pdv-onix-main {
     grid-template-columns: 1fr 1fr 1fr;
   }
-  .onix-field-produto .onix-value { font-size: 32px; }
+  .onix-field-produto .onix-value { font-size: 32px; padding: 6px 14px; }
+  .onix-value { font-size: 22px; padding: 5px 12px; }
+  .onix-total > strong { font-size: 48px; }
+  .onix-logo-wrap img { height: 110px; }
+}
+
+/* Monitor baixo em altura (netbook/notebook antigo) */
+@media (max-height: 720px) {
+  .pdv-onix-main {
+    gap: 4px 10px;
+    padding: 6px 12px 0;
+    grid-template-rows:
+      minmax(50px, 1fr)
+      minmax(44px, 0.85fr)
+      minmax(44px, 0.85fr)
+      minmax(38px, 0.5fr)
+      minmax(120px, 1.8fr)
+      auto
+      auto;
+  }
+  .onix-field > label { font-size: 14px; }
+  .onix-field-produto .onix-value { font-size: 30px; padding: 5px 14px; }
+  .onix-value { font-size: 22px; padding: 4px 12px; }
   .onix-total > strong { font-size: 44px; }
+  .onix-total > span { font-size: 16px; }
+  .onix-logo-wrap img { height: 110px; }
+  .onix-code-input { font-size: 17px; padding: 7px 12px; }
+  .onix-action-bar { font-size: 15px; padding: 5px 12px; letter-spacing: 1.4px; }
+  .onix-status-bar { font-size: 11px; padding: 3px 12px; }
 }
 
 .login-footer-v2 {

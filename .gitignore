@@ -18,6 +18,9 @@ backups/
 logs/
 *.log
 
+# Fotos/screenshots de referencia pessoais (nao versionar)
+_refs/
+
 # Python
 __pycache__/
 *.py[cod]
