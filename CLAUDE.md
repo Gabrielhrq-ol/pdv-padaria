@@ -30,6 +30,13 @@ Fora do escopo (nao implementar sem pedido explicito): NFC-e/nota fiscal, TEF/ma
 11. Acoes sensiveis vao para audit_log (cancelamento, desconto, ajuste de estoque, abrir/fechar caixa, login falho).
 12. Todo cupom impresso traz "CUPOM NAO FISCAL - SEM VALOR FISCAL".
 
+## Decisoes do dono na operacao
+- PDV e painel entram sem senha; PDV e caixa exigem operador aberto (cookie operator_id).
+- Cada bipada gera linha nova; quantidade em uma linha so vem de N*codigo ou Ctrl+Q.
+- Fechamento nao pede motivo de sobra/falta e emite relatorio com cada venda.
+- Banco guarda UTC; telas, cupom e relatorios mostram o horario local do PC.
+- Impressora real: 58 mm, 32 colunas, CP850, sem corte.
+
 ## Arquitetura (baixo acoplamento)
 - app/routers: recebem e respondem, sem regra de negocio
 - app/services: regra de negocio (sales, stock, cash, reports, backup)

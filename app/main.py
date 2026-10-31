@@ -41,6 +41,7 @@ from app.routers import cash as cash_router
 from app.routers import pdv as pdv_router
 from app.routers import products as products_router
 from app.routers.pdv import get_pdv_operator
+from app.security import CSRF_COOKIE, SESSION_COOKIE
 from app.routers import reports as reports_router
 from app.routers import sales as sales_router
 from app.routers import users as users_router
@@ -228,6 +229,17 @@ async def products_page(
 OPERADOR_DESTINOS = {"/pdv", "/caixa"}
 
 
+def _encerrar_sessao_painel(request: Request) -> RedirectResponse:
+    """
+    Operador aberto e outra pessoa logada no painel: encerra o painel para
+    as vendas sairem no nome do operador, nao de quem estava logado.
+    """
+    response = RedirectResponse(url=str(request.url.path), status_code=302)
+    response.delete_cookie(SESSION_COOKIE, path="/")
+    response.delete_cookie(CSRF_COOKIE, path="/")
+    return response
+
+
 @app.get("/operador", include_in_schema=False, response_model=None)
 async def operador_page(request: Request, next: str = "/pdv") -> HTMLResponse:
     """Tela de abrir operador. `next` so aceita destinos internos conhecidos."""
@@ -254,6 +266,8 @@ async def pdv_page(
     """
     if operator is None:
         return RedirectResponse(url="/operador?next=/pdv", status_code=302)
+    if user is not None and user.id != operator.id:
+        return _encerrar_sessao_painel(request)
 
     # Guard: se cash required e nao ha caixa aberto, manda pra /caixa
     from app.services.cash_service import get_open_session, is_cash_required
@@ -287,6 +301,8 @@ async def caixa_page(
     """
     if operator is None:
         return RedirectResponse(url="/operador?next=/caixa", status_code=302)
+    if user is not None and user.id != operator.id:
+        return _encerrar_sessao_painel(request)
 
     user_ctx = (
         {"name": user.name, "username": user.username, "role": user.role}

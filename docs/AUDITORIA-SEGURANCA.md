@@ -18,6 +18,13 @@ entra na entrega.
 
 ---
 
+> **Decisão posterior (2026-10-31):** a pedido do cliente, o painel e o PDV
+> entram **sem senha**: `/auth/select-admin/{id}` abre sessão de admin sem
+> credencial e o cookie `operator_id` não é assinado. Quem tiver acesso ao PC
+> usa o painel, e o nome nas vendas não comprova autoria. O risco é aceito
+> porque o servidor só escuta em `127.0.0.1`. Isso torna sem efeito, no fluxo
+> normal, o lockout e a senha citados neste relatório.
+
 ## Sumário executivo
 
 - **1 crítico** — credenciais de dev no banco (bloqueia entrega até trocar)

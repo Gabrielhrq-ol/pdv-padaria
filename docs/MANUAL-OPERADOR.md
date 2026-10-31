@@ -12,29 +12,23 @@ Linguagem simples e direta.
 ### 1.1. Ligar o PC e abrir o PDV
 
 1. Ligar o computador normalmente.
-2. Dar **duplo-clique** no atalho **PDV** no desktop.
-3. Vai abrir uma janela preta (cmd) e, logo depois, o navegador com a
-   tela de login.
-4. **Não feche** a janela preta — ela é o sistema rodando. Só feche no
-   fim do dia.
+2. Dar **duplo-clique** no ícone **PDV** da área de trabalho.
+3. O sistema abre numa janela própria. Fechar essa janela não desliga o
+   sistema; para voltar, é só clicar no ícone de novo.
 
-### 1.2. Fazer login
+### 1.2. Abrir o operador
 
-1. Digitar **usuário** e **senha**.
-2. Depois de 5 senhas erradas em 15 minutos, a conta **bloqueia por 15 min**.
-   Esperar e tentar de novo.
+Na tela inicial, clicar em **Abrir caixa**. O sistema só funciona com
+operador aberto: escolher o nome com as **setas** e apertar **Enter**. O
+operador fica aberto por 12 horas.
 
 ### 1.3. Abrir o caixa
 
-Antes de qualquer venda, abrir o caixa:
+Se o caixa estiver fechado, o sistema pede para abrir:
 
-1. Clicar em **Caixa** no topo da tela.
-2. Contar o **dinheiro de troco** que está na gaveta.
-3. Digitar esse valor em **"Fundo inicial"** (ex: `100,00`).
-4. (Opcional) Em "Observações" escrever algo como "turno manhã Zé".
-5. Clicar **Abrir caixa**.
-
-Pronto, pode começar a vender.
+1. Contar o **dinheiro de troco** que está na gaveta.
+2. Digitar o valor (ex: `100,00`).
+3. Apertar **Enter**. A tela do PDV abre pronta para vender.
 
 ---
 
@@ -44,8 +38,8 @@ Pronto, pode começar a vender.
 
 1. Clicar no campo de código (fica em foco automático).
 2. Passar o produto no leitor. O item aparece na lista com qtd 1.
-3. Se vendeu mais de um do mesmo, **passar de novo** ou digitar `3*CODIGO`
-   e Enter.
+3. Cada passada vira uma **linha nova** no cupom, mesmo sendo o mesmo
+   produto. Para juntar a quantidade em uma linha, digitar `3*CODIGO` e Enter.
 
 ### 2.2. Pelo código interno (pães, salgados)
 
@@ -61,7 +55,7 @@ Para itens vendidos por peso (ex: bolo por kg):
 
 1. Pesar o produto na balança (manual, por enquanto).
 2. Digitar o código. O item entra com qtd 1,000 kg.
-3. Apertar **F3** (ou botão "Qtd" no rodapé) e digitar a quantidade real:
+3. Apertar **Ctrl+Q** e digitar a quantidade real:
    - `0,350` para 350 gramas
    - `1,500` para 1,5 kg
 4. Enter.
@@ -70,13 +64,15 @@ Para itens vendidos por peso (ex: bolo por kg):
 
 | Tecla | O que faz | Também disponível em notebook |
 |-------|-----------|-------------------------------|
+| F1 ou F12 | Menu de funções (sangria, suprimento, fechar caixa) | — |
 | F2 | Buscar produto por nome | `Ctrl+B` |
-| F3 | Mudar quantidade do item selecionado | `Ctrl+Q` |
-| F4 | Remover item selecionado | `Ctrl+D` |
-| F6 | Finalizar venda e pagar | — (botão "Pagar") |
-| F8 | Cancelar venda inteira | `Ctrl+X` |
-| F9 | Consultar preço sem adicionar | `Ctrl+I` |
-| F10 | Reimprimir última venda | — (botão) |
+| F3 ou F4 | Lista os itens para escolher qual cancelar | `Ctrl+D` |
+| F8 | Cancelar a venda ou o último cupom | `Ctrl+X` |
+| F9 ou H | Consultar preço sem adicionar | `Ctrl+I` |
+| F10 | Reimprimir último cupom | — |
+| F11 | Ver o cupom em tela cheia | — |
+| Ctrl+Q | Mudar quantidade do item selecionado | — |
+| Tab ou Esc | Voltar para a tela anterior | — |
 
 > No notebook do cliente, as teclas F2-F9 estão atrás da tecla **Fn**
 > (brilho / volume). Use os atalhos `Ctrl+letra` acima ou os **botões no
@@ -84,22 +80,25 @@ Para itens vendidos por peso (ex: bolo por kg):
 
 ### 2.5. Finalizar e cobrar
 
-1. Apertar **F6** (ou clicar "Pagar").
-2. Escolher a forma de pagamento:
-   - **Dinheiro** → digitar valor recebido. O sistema calcula o troco.
-   - **Débito / Crédito / PIX** → digitar o valor exato (sem troco).
-   - **Pagamento dividido** → somar várias formas até cobrir o total.
-3. (Opcional) Marcar **Imprimir cupom** se o cliente quiser.
-4. Clicar **Finalizar**.
+1. Com o campo de código vazio, apertar **Enter**.
+2. Escolher a forma com as **setas** e apertar **Enter**.
+3. O cursor vai para o valor:
+   - **Dinheiro** → digitar o valor recebido. O sistema calcula o troco.
+   - **Débito / Crédito / PIX** → o valor já vem preenchido.
+4. Apertar **Enter**. A venda é finalizada e o cupom imprime.
 
-Pronto. O sistema baixa o estoque automaticamente, registra o pagamento
-no caixa e (se marcou) imprime o cupom.
+Para não imprimir, clicar em **Finalizar sem imprimir**. Para pagamento
+dividido, clicar em **+ Adicionar pagamento**. O sistema baixa o estoque e
+registra o pagamento no caixa.
 
-### 2.6. Cancelar venda
+### 2.6. Cancelar
 
-1. **Antes de finalizar:** apertar **F8** e confirmar com motivo.
-2. **Depois de finalizar:** chamar o admin. Só admin cancela venda
-   finalizada (vai no histórico e faz estorno).
+- **Um item:** apertar **F3**, escolher com as setas, Enter e confirmar.
+- **A venda em andamento:** apertar **F8**, digitar o motivo e Enter.
+- **O último cupom já finalizado:** com a tela vazia, apertar **F8**.
+  Conferir número, hora e valor na tela, digitar o motivo e Enter. O estoque
+  volta e o valor sai do caixa. **Devolver o dinheiro ao cliente é com você.**
+- **Cupom de um caixa já fechado:** estornar em **Painel > Vendas**.
 
 ---
 
@@ -129,30 +128,27 @@ Exemplos: reforço de troco no meio do dia.
 
 Fazer isso **antes de fechar a padaria**:
 
-1. Clicar em **Caixa** no topo.
-2. Olhar o campo **Esperado em caixa** — é o que o sistema calculou.
-   Fórmula: `fundo inicial + suprimentos + vendas em dinheiro − sangrias`.
-3. **Contar o dinheiro físico** da gaveta.
-4. Digitar o valor em **"Dinheiro contado"**.
-5. Se bater com o esperado → clicar **Fechar caixa**.
-6. Se **sobrar ou faltar** → o sistema mostra a diferença e pede
-   **motivo obrigatório** (ex: "faltaram 50 centavos de troco").
-7. Clicar **Fechar caixa**.
+1. Apertar **F1** e escolher **Fechar caixa** (ou ir em **Caixa**).
+2. **Contar o dinheiro físico** da gaveta.
+3. Digitar o valor em **"Dinheiro contado"** e confirmar.
+4. O caixa fecha e sai o **relatório**, na impressora e na tela: cada venda
+   com hora, forma e valor, o total por forma de pagamento e a conferência
+   do dinheiro, com a sobra ou falta. Não é preciso informar motivo.
+
+Se a impressora falhar, o caixa continua fechado. Use **Imprimir de novo**.
 
 ### 4.1. Importante antes de fechar
 
 - **Nenhuma venda pode estar em aberto.** Se tiver, o sistema avisa.
   Finalizar ou cancelar antes.
-- O **backup automático dispara** no fechamento. Ignorar — ele roda
-  sozinho em segundo plano. Dá pra ver em `/admin/backup` (só admin) se
+- O **backup automático dispara** no fechamento, em segundo plano. Se o
+  destino for pen drive, ele precisa estar plugado. Dá pra ver em `/admin/backup` (só admin) se
   deu certo.
 
 ### 4.2. Depois de fechar
 
-Fechou o caixa, sistema registrou. Agora pode:
-- Sair do sistema (botão **Sair** no topo direito)
-- Fechar a janela preta do cmd
-- Desligar o computador
+Fechou o caixa, sistema registrou. Agora pode fechar a janela do PDV e
+desligar o computador.
 
 ---
 
@@ -160,8 +156,7 @@ Fechou o caixa, sistema registrou. Agora pode:
 
 ### "Abra o caixa antes de iniciar uma venda"
 
-Você entrou direto no PDV sem abrir o caixa. Clicar em **Caixa**,
-abrir, voltar pro PDV.
+O caixa está fechado. Abra-o informando o valor inicial e aperte Enter.
 
 ### Produto não é encontrado pelo código
 

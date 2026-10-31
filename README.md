@@ -3,8 +3,8 @@
 Sistema de ponto de venda (PDV) local para padaria de bairro. Roda 100%
 local no computador do caixa, sem depender de internet para vender.
 
-> **Status:** Fase 10 (entrega). 9 fases funcionais concluídas. 522 testes
-> automatizados passando. Veja `CLAUDE.md` para regras inegociáveis.
+> **Status:** em operação na João & Maria. Veja `AVISOS-ENTREGA.md` para
+> instalar e `CLAUDE.md` para as regras inegociáveis.
 
 ## Documentação
 
@@ -18,7 +18,7 @@ local no computador do caixa, sem depender de internet para vender.
 ## Stack
 
 - Python 3.12
-- FastAPI 0.115 + Uvicorn
+- FastAPI 0.133 + Uvicorn
 - SQLite (WAL, foreign_keys ligados)
 - SQLAlchemy 2 + Alembic
 - Jinja2 autoescape + HTML/CSS/JS puro
@@ -53,7 +53,7 @@ Ler `docs/INSTALACAO.md`. Resumo: `start_pdv.bat` na raiz faz tudo.
 pytest
 ```
 
-522 testes cobrem autorização, CSRF, invariantes financeiros, cálculos de
+A suíte cobre autorização, CSRF, invariantes financeiros, cálculos de
 estoque e caixa, hooks de backup, formato CSV, páginas HTML.
 
 ## Auditoria de dependências
@@ -98,7 +98,7 @@ app/
   templates/*.html             # Jinja2 autoescape
 alembic/versions/              # migrações 1 → 7
 scripts/                       # seed_cliente, seed_demo, create_admin, import_products, do_backup, test_printer
-tests/                         # 522 testes
+tests/                         # testes automatizados (pytest)
 docs/                          # instalação, operador, checklist, auditoria, importação CSV
 start_pdv.bat                  # script único pro cliente clicar
 data/                          # pdv.db + cliente.json (fora do Git)
@@ -120,4 +120,4 @@ Ver `CLAUDE.md` completo. Pontos chave:
 9. Segredos no `.env` (fora do Git). Nunca commitar `.env`, `data/`, `*.db`, `backups/`
 10. Pydantic `extra="forbid"` em todos os schemas
 11. **Audit log** em ações sensíveis
-12. Cupom traz **"DOCUMENTO SEM VALOR FISCAL"** em destaque
+12. Cupom traz **"CUPOM NAO FISCAL - SEM VALOR FISCAL"** em destaque

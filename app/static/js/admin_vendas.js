@@ -83,7 +83,7 @@
   }
   function formatDate(iso) {
     if (!iso) return '-';
-    const d = new Date(iso);
+    const d = new Date(/Z$|[+-]\d\d:\d\d$/.test(iso) ? iso : iso + 'Z');
     if (isNaN(d.getTime())) return iso;
     const dd = String(d.getDate()).padStart(2, '0');
     const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -139,8 +139,8 @@
       const ate = document.getElementById('filtro-ate').value;
       const st = document.getElementById('filtro-status').value;
       const uid = document.getElementById('filtro-user').value;
-      if (de) p.set('date_from', de + 'T00:00:00');
-      if (ate) p.set('date_to', ate + 'T23:59:59');
+      if (de) p.set('date_from', new Date(de + 'T00:00:00').toISOString());
+      if (ate) p.set('date_to', new Date(ate + 'T23:59:59').toISOString());
       if (st) p.set('status', st);
       if (uid) p.set('user_id', uid);
     }

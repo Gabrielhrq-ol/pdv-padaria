@@ -93,8 +93,7 @@
       currentOp = r.operator;
       renderCurrent();
       closeMenu();
-      // feedback leve
-      if (window.showPdvToast) window.showPdvToast('Boa venda, ' + op.name.split(' ')[0] + '!', 'ok');
+      window.location.reload();
     } catch (err) {
       alert('Erro ao selecionar operador: ' + err.message);
     }

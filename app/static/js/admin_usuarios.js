@@ -73,7 +73,7 @@
 
   function formatDate(iso) {
     if (!iso) return '-';
-    const d = new Date(iso);
+    const d = new Date(/Z$|[+-]\d\d:\d\d$/.test(iso) ? iso : iso + 'Z');
     if (isNaN(d.getTime())) return iso;
     const dd = String(d.getDate()).padStart(2, '0');
     const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -97,10 +97,8 @@
     }
 
     // Descobre quem sou eu pelo header (user.name no template vem via jinja)
-    const myLabel = document.querySelector('.user-info strong, .user-info').textContent;
-    // Fallback: ache o usuario cujo nome bate com o do header
-    const headerName = (document.querySelector('.user-info') || {}).textContent || '';
-    currentUser = users.find(u => headerName.indexOf(u.name) >= 0) || null;
+    const headerName = (document.querySelector('.nk-topbar-user strong') || {}).textContent || '';
+    currentUser = users.find(u => u.name === headerName.trim()) || null;
 
     if (!users.length) { vazio.hidden = false; return; }
     vazio.hidden = true;

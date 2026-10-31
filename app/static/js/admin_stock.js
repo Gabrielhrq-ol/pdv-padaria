@@ -323,9 +323,9 @@
     const tipo = document.getElementById('filtro-tipo').value;
     if (tipo) params.set('type', tipo);
     const dateFrom = parseDateBR(document.getElementById('filtro-de').value);
-    if (dateFrom) params.set('date_from', dateFrom + 'T00:00:00');
+    if (dateFrom) params.set('date_from', new Date(dateFrom + 'T00:00:00').toISOString());
     const dateTo = parseDateBR(document.getElementById('filtro-ate').value);
-    if (dateTo) params.set('date_to', dateTo + 'T23:59:59');
+    if (dateTo) params.set('date_to', new Date(dateTo + 'T23:59:59').toISOString());
     params.set('limit', '200');
 
     const tbody = document.getElementById('tbody-historico');
@@ -373,7 +373,7 @@
 
   function formatDate(iso) {
     if (!iso) return '';
-    const d = new Date(iso);
+    const d = new Date(/Z$|[+-]\d\d:\d\d$/.test(iso) ? iso : iso + 'Z');
     if (isNaN(d.getTime())) return iso;
     const dd = String(d.getDate()).padStart(2, '0');
     const mm = String(d.getMonth() + 1).padStart(2, '0');

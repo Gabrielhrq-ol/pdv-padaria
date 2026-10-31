@@ -12,7 +12,7 @@ Padrao de filtros de data:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from sqlalchemy import func, select
@@ -41,8 +41,11 @@ def _apply_date_filter(stmt, column, date_from, date_to):
 
 
 def _today_window() -> tuple[datetime, datetime]:
-    now = utc_now()
-    start = datetime(now.year, now.month, now.day)
+    """Dia de hoje no horario local do PC, em UTC como esta no banco."""
+    local = datetime.now().astimezone().replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    start = local.astimezone(timezone.utc).replace(tzinfo=None)
     end = start + timedelta(days=1) - timedelta(microseconds=1)
     return start, end
 
@@ -193,9 +196,9 @@ def sales_by_period(
     date_to: Optional[datetime] = None,
     include_cancelled: bool = False,
 ) -> SalesPeriodResult:
-    """Faturamento agrupado por dia (date(finalized_at))."""
+    """Faturamento agrupado por dia local (banco guarda UTC)."""
     # SQLite func date() retorna YYYY-MM-DD
-    day_expr = func.date(Sale.finalized_at)
+    day_expr = func.date(Sale.finalized_at, "localtime")
     stmt = (
         select(
             day_expr.label("day"),

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import csv
 import io
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
@@ -72,7 +72,9 @@ def _brl(cents: int) -> str:
 def _fmt_dt(dt: Optional[datetime]) -> str:
     if dt is None:
         return ""
-    return dt.strftime("%Y-%m-%d %H:%M")
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone().strftime("%Y-%m-%d %H:%M")
 
 
 def _fmt_qty(qty_milli: int, unit: str) -> str:

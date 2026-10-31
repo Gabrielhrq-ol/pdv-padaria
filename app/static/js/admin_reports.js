@@ -54,7 +54,7 @@
 
   function formatDate(iso) {
     if (!iso) return '';
-    const d = new Date(iso);
+    const d = new Date(/Z$|[+-]\d\d:\d\d$/.test(iso) ? iso : iso + 'Z');
     if (isNaN(d.getTime())) return iso;
     const dd = String(d.getDate()).padStart(2, '0');
     const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -88,8 +88,8 @@
 
   function queryString(extra) {
     const p = new URLSearchParams();
-    if (filtroDe) p.set('date_from', filtroDe + 'T00:00:00');
-    if (filtroAte) p.set('date_to', filtroAte + 'T23:59:59');
+    if (filtroDe) p.set('date_from', new Date(filtroDe + 'T00:00:00').toISOString());
+    if (filtroAte) p.set('date_to', new Date(filtroAte + 'T23:59:59').toISOString());
     if (extra) Object.keys(extra).forEach(k => { if (extra[k] != null) p.set(k, String(extra[k])); });
     const s = p.toString();
     return s ? '?' + s : '';

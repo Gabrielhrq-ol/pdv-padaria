@@ -3,6 +3,28 @@
 Histórico das 9 fases funcionais do PDV Padaria. Formato inspirado em
 [Keep a Changelog](https://keepachangelog.com/).
 
+## [10.1.0] — 2026-10-31 — Ajustes da primeira instalação real
+
+### Adicionado
+- Tela "Abrir operador": PDV e caixa só funcionam com operador aberto
+- Relatório de fechamento impresso e na tela, com reimpressão
+- `abrir_pdv.vbs`: janela própria e servidor em segundo plano
+- F3 lista itens para cancelar; F8 cancela também o último cupom do caixa aberto
+- Pagamento por setas + Enter; Tab e Esc voltam em todas as janelas
+
+### Alterado
+- Cada bipada gera linha nova; `N*codigo` fica em uma linha
+- Fechamento não pede motivo de sobra/falta
+- Abrir o caixa leva direto ao PDV
+- Abrir operador diferente de quem está no painel encerra a sessão do painel
+
+### Corrigido
+- Cupom em 58 mm não corta nome da loja nem aviso não fiscal
+- Hora em UTC no cupom, telas e CSV; "hoje" e relatórios por dia usam o dia local
+- Página de usuários não listava ninguém (seletor antigo)
+- Backup ao fechar o caixa ficava desligado quando a opção não estava salva
+- Contraste das janelas do PDV e janela de pagamento em 1366x768
+
 ## [10.0.0] — 2026-10-16 — Entrega
 
 ### Documentação de entrega

@@ -69,7 +69,7 @@
 
   function formatDate(iso) {
     if (!iso) return '';
-    const d = new Date(iso);
+    const d = new Date(/Z$|[+-]\d\d:\d\d$/.test(iso) ? iso : iso + 'Z');
     if (isNaN(d.getTime())) return iso;
     const dd = String(d.getDate()).padStart(2, '0');
     const mm = String(d.getMonth() + 1).padStart(2, '0');

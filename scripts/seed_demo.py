@@ -35,7 +35,7 @@ DEMO_SETTINGS: dict[str, str] = {
     "receipt_footer": "Obrigado e volte sempre!",
     "receipt_columns": "32",
     "receipt_show_barcode": "false",
-    "receipt_disclaimer": "DOCUMENTO SEM VALOR FISCAL",
+    "receipt_disclaimer": "CUPOM NAO FISCAL - SEM VALOR FISCAL",
     "printer_name": "",
     "printer_codepage": "",
     "printer_auto_cut": "false",

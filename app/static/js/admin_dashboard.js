@@ -147,8 +147,8 @@
     const y = today.getFullYear();
     const m = String(today.getMonth() + 1).padStart(2, '0');
     const d = String(today.getDate()).padStart(2, '0');
-    const dateFrom = `${y}-${m}-${d}T00:00:00`;
-    const dateTo = `${y}-${m}-${d}T23:59:59`;
+    const dateFrom = new Date(`${y}-${m}-${d}T00:00:00`).toISOString();
+    const dateTo = new Date(`${y}-${m}-${d}T23:59:59`).toISOString();
 
     try {
       const r = await fetchJson(

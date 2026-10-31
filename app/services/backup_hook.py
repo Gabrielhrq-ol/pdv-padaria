@@ -189,7 +189,7 @@ def trigger_post_close_backup(db: Session, user: Optional[User]) -> None:
     NUNCA levanta - falha de backup nao pode travar o fechamento do caixa.
     """
     try:
-        if not _get_bool(db, "backup_on_cash_close", False):
+        if not _get_bool(db, "backup_on_cash_close", True):
             return
         if not _destinations(db):
             return
