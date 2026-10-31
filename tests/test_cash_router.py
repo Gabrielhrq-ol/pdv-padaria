@@ -8,19 +8,26 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 
+def _abrir_operador(client: TestClient) -> None:
+    uid = client.get("/auth/me").json()["id"]
+    r = client.post("/api/pdv/select-operator", json={"operator_id": uid})
+    assert r.status_code == 200, r.text
+
+
 class TestPaginaCaixa:
-    def test_anonimo_abre_publico(self, client: TestClient) -> None:
-        # Fase 18: /caixa e publico (parte do fluxo do PDV sem login).
+    def test_anonimo_vai_abrir_operador(self, client: TestClient) -> None:
         r = client.get("/caixa", follow_redirects=False)
-        assert r.status_code == 200
-        assert "Caixa" in r.text
+        assert r.status_code == 302
+        assert r.headers["location"] == "/operador?next=/caixa"
 
     def test_caixa_pode_abrir(self, caixa_client: TestClient) -> None:
+        _abrir_operador(caixa_client)
         r = caixa_client.get("/caixa")
         assert r.status_code == 200
         assert "Caixa" in r.text
 
     def test_admin_pode_abrir(self, admin_client: TestClient) -> None:
+        _abrir_operador(admin_client)
         r = admin_client.get("/caixa")
         assert r.status_code == 200
 
@@ -173,28 +180,95 @@ class TestFechar:
         assert r.status_code == 200
         assert r.json()["status"] == "closed"
 
-    def test_fechar_com_diferenca_sem_motivo_422(
+    def test_fechar_com_diferenca_sem_motivo_ok(
         self, admin_client: TestClient
     ) -> None:
         admin_client.post("/api/cash/open", json={"opening_cash_cents": 10000})
         r = admin_client.post(
             "/api/cash/close", json={"declared_cash_cents": 9500}
         )
-        assert r.status_code == 422
+        assert r.status_code == 200
+        assert r.json()["closing_difference_cents"] == -500
 
-    def test_fechar_com_diferenca_e_motivo(
+    def test_motivo_de_diferenca_nao_e_mais_aceito(
         self, admin_client: TestClient
     ) -> None:
         admin_client.post("/api/cash/open", json={"opening_cash_cents": 10000})
         r = admin_client.post(
             "/api/cash/close",
-            json={
-                "declared_cash_cents": 10050,
-                "difference_reason": "cliente trocou nota",
-            },
+            json={"declared_cash_cents": 10050, "difference_reason": "x"},
+        )
+        assert r.status_code == 422
+
+    def test_fechar_devolve_relatorio_com_cada_venda(
+        self, admin_client: TestClient
+    ) -> None:
+        admin_client.post("/api/cash/open", json={"opening_cash_cents": 10000})
+        pid = admin_client.post(
+            "/api/products",
+            json={"name": "Pao", "unit": "UN", "price_cents": 750},
+        ).json()["id"]
+        valores = []
+        for metodo, pago in (("dinheiro", 1000), ("pix", 750)):
+            venda = admin_client.post("/api/sales").json()
+            admin_client.post(
+                f"/api/sales/{venda['id']}/items", json={"product_id": pid}
+            )
+            r = admin_client.post(
+                f"/api/sales/{venda['id']}/finalize",
+                json={
+                    "payments": [{"method": metodo, "amount_cents": pago}],
+                    "print_receipt": False,
+                },
+            )
+            assert r.status_code == 200, r.text
+            valores.append(venda["number"])
+
+        r = admin_client.post(
+            "/api/cash/close", json={"declared_cash_cents": 17000}
+        )
+        assert r.status_code == 200, r.text
+        data = r.json()
+        assert data["printed"] is True
+        texto = "\n".join(data["report_lines"])
+        assert "FECHAMENTO DE CAIXA" in texto
+        for numero in valores:
+            assert f"{numero:06d}" in texto
+        assert "Qtd de vendas" in texto and "R$ 15,00" in texto
+        assert "PIX" in texto and "Dinheiro" in texto
+        assert "SOBRA" in texto  # esperado 107,50, contado 170,00
+
+    def test_reimprimir_relatorio(self, admin_client: TestClient) -> None:
+        sid = admin_client.post(
+            "/api/cash/open", json={"opening_cash_cents": 100}
+        ).json()["id"]
+        r = admin_client.post(f"/api/cash/{sid}/report/print")
+        assert r.status_code == 409
+        admin_client.post("/api/cash/close", json={"declared_cash_cents": 100})
+        r = admin_client.post(f"/api/cash/{sid}/report/print")
+        assert r.status_code == 200
+        assert r.json()["printed"] is True
+        assert admin_client.post("/api/cash/99999/report/print").status_code == 404
+
+    def test_falha_na_impressora_nao_desfaz_fechamento(
+        self, admin_client: TestClient, monkeypatch
+    ) -> None:
+        from app.routers import cash as cash_router
+
+        def quebrada(_db):
+            raise RuntimeError("sem papel")
+
+        monkeypatch.setattr(cash_router, "get_printer", quebrada)
+        admin_client.post("/api/cash/open", json={"opening_cash_cents": 100})
+        r = admin_client.post(
+            "/api/cash/close", json={"declared_cash_cents": 100}
         )
         assert r.status_code == 200
-        assert r.json()["closing_difference_cents"] == 50
+        data = r.json()
+        assert data["status"] == "closed"
+        assert data["printed"] is False
+        assert "sem papel" in data["print_error"]
+        assert data["report_lines"]
 
 
 class TestToggleCashRequired:

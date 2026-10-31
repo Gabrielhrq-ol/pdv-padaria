@@ -216,3 +216,26 @@ class TestColunasPersonalizadas:
         )
         for ln in lines:
             assert len(ln) <= 42
+
+    def test_58mm_nao_corta_nome_nem_aviso(self) -> None:
+        s = dict(SETTINGS)
+        s["receipt_columns"] = "32"
+        s["store_name"] = "Joao & Maria - Confeitaria e Panificacao"
+        lines = build_receipt_lines(FakeSale(), [], [], s)
+        for ln in lines:
+            assert len(ln) <= 32
+        texto = " ".join(" ".join(lines).split())
+        assert "JOAO & MARIA - CONFEITARIA E PANIFICACAO" in texto
+        assert "CUPOM NAO FISCAL - SEM VALOR FISCAL" in texto
+
+
+class TestHoraLocal:
+    def test_utc_do_banco_vira_hora_local(self) -> None:
+        utc = datetime(2026, 10, 13, 14, 32)
+        esperado = (
+            utc.replace(tzinfo=timezone.utc).astimezone().strftime("%d/%m/%Y %H:%M")
+        )
+        lines = build_receipt_lines(
+            FakeSale(finalized_at=utc), [], [], SETTINGS,
+        )
+        assert any(esperado in ln for ln in lines)

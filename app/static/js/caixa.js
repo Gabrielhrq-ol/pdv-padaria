@@ -41,7 +41,7 @@
     }
     const resp = await fetch(path, opts);
     if (resp.status === 401) {
-      window.location.assign('/login');
+      window.location.assign('/operador?next=/caixa');
       throw new Error('Nao autenticado.');
     }
     const ct = resp.headers.get('content-type') || '';
@@ -193,11 +193,20 @@
     document.getElementById('panel-abrir').hidden = false;
     currentSession = null;
     currentSummary = null;
+    // Vindo do PDV o foco e abrir o caixa: nada de configuracao na frente.
+    const config = document.getElementById('card-config');
+    if (config && new URLSearchParams(window.location.search).get('msg') === 'abra') {
+      config.hidden = true;
+    }
+    const campo = document.getElementById('abrir-cash');
+    campo.focus();
+    campo.select();
   }
 
   function renderOpenSession(summary) {
     document.getElementById('panel-abrir').hidden = true;
     document.getElementById('panel-aberto').hidden = false;
+    document.getElementById('panel-relatorio').hidden = true;
     const s = summary.session;
     document.getElementById('info-aberto-por').textContent = s.opened_by_name || '-';
     document.getElementById('info-aberto-em').textContent = formatDate(s.opened_at);
@@ -277,23 +286,47 @@
     if (!currentSummary) return;
     const text = document.getElementById('fechar-declarado').value;
     const target = document.getElementById('fechar-diferenca');
-    const row = document.getElementById('row-fechar-reason');
     try {
       const declared = parseBRL(text);
       const diff = declared - currentSummary.expected_cash_cents;
       if (diff === 0) {
         target.textContent = formatBRL(0);
         target.className = '';
-        row.hidden = true;
       } else {
-        target.textContent = (diff > 0 ? '+' : '') + formatBRL(diff);
+        target.textContent = (diff > 0 ? 'Sobra ' : 'Falta ') + formatBRL(Math.abs(diff));
         target.className = diff > 0 ? 'diff-sobra' : 'diff-falta';
-        row.hidden = false;
       }
     } catch (_) {
       target.textContent = '—';
       target.className = '';
-      row.hidden = true;
+    }
+  }
+
+  let relatorioSessaoId = null;
+
+  function statusImpressao(printed, erro) {
+    return printed
+      ? 'Relatório enviado para a impressora.'
+      : 'Não imprimiu: ' + (erro || 'erro desconhecido') + '. O caixa está fechado.';
+  }
+
+  function mostrarRelatorio(result) {
+    relatorioSessaoId = result.id;
+    document.getElementById('relatorio-linhas').textContent = (result.report_lines || []).join('\n');
+    document.getElementById('relatorio-status').textContent =
+      statusImpressao(result.printed, result.print_error);
+    document.getElementById('panel-relatorio').hidden = false;
+    window.scrollTo(0, 0);
+  }
+
+  async function reimprimirRelatorio() {
+    if (!relatorioSessaoId) return;
+    try {
+      const r = await apiFetch('/api/cash/' + relatorioSessaoId + '/report/print', { method: 'POST' });
+      document.getElementById('relatorio-status').textContent =
+        statusImpressao(r.printed, r.print_error);
+    } catch (err) {
+      document.getElementById('relatorio-status').textContent = 'Erro: ' + err.message;
     }
   }
 
@@ -310,8 +343,7 @@
     if (notes) payload.notes = notes;
     try {
       await apiFetch(API_OPEN, { method: 'POST', body: JSON.stringify(payload) });
-      showFeedback('Caixa aberto.', 'ok');
-      await loadSummary();
+      window.location.assign('/pdv');
     } catch (err) {
       showError('abrir-erro', err.message);
     }
@@ -369,20 +401,14 @@
     let declared;
     try { declared = parseBRL(document.getElementById('fechar-declarado').value); }
     catch (err) { showError('fechar-erro', err.message); return; }
-    const diff = declared - currentSummary.expected_cash_cents;
-    const payload = { declared_cash_cents: declared };
-    if (diff !== 0) {
-      const reason = document.getElementById('fechar-reason').value.trim();
-      if (reason.length < 3) {
-        showError('fechar-erro', 'Motivo obrigatorio quando ha diferenca (min 3 caracteres).');
-        return;
-      }
-      payload.difference_reason = reason;
-    }
     try {
-      await apiFetch(API_CLOSE, { method: 'POST', body: JSON.stringify(payload) });
+      const result = await apiFetch(API_CLOSE, {
+        method: 'POST',
+        body: JSON.stringify({ declared_cash_cents: declared }),
+      });
       showFeedback('Caixa fechado.', 'ok');
       renderNoSession();
+      mostrarRelatorio(result);
     } catch (err) {
       showError('fechar-erro', err.message);
     }
@@ -421,6 +447,7 @@
     document.getElementById('form-suprimento').addEventListener('submit', submitSuprimento);
     document.getElementById('form-fechar').addEventListener('submit', submitFechar);
     document.getElementById('fechar-declarado').addEventListener('input', updateFecharDiff);
+    document.getElementById('btn-reimprimir-relatorio').addEventListener('click', reimprimirRelatorio);
     const toggle = document.getElementById('toggle-cash-required');
     if (toggle) toggle.addEventListener('change', toggleCashRequired);
     document.getElementById('btn-sair').addEventListener('click', doLogout);

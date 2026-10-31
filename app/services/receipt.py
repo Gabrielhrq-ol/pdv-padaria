@@ -14,7 +14,7 @@ Cupom traz "CUPOM NAO FISCAL - SEM VALOR FISCAL" (CLAUDE.md regra 12).
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Iterable, Optional
 
 from app.money import format_brl, format_qty
@@ -67,10 +67,32 @@ def _wrap(text: str, width: int) -> list[str]:
     return lines
 
 
+def _wrap_words(text: str, width: int) -> list[str]:
+    """Quebra por palavras; palavra maior que a largura e fatiada."""
+    lines: list[str] = []
+    current = ""
+    for word in (text or "").split():
+        candidate = f"{current} {word}" if current else word
+        if len(candidate) <= width:
+            current = candidate
+            continue
+        if current:
+            lines.append(current)
+        pieces = _wrap(word, width)
+        lines.extend(pieces[:-1])
+        current = pieces[-1]
+    if current:
+        lines.append(current)
+    return lines
+
+
 def _format_dt(dt: Optional[datetime]) -> str:
+    """Banco guarda UTC sem fuso; cupom mostra a hora local do PC."""
     if dt is None:
         return ""
-    return dt.strftime("%d/%m/%Y %H:%M")
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone().strftime("%d/%m/%Y %H:%M")
 
 
 def build_receipt_lines(
@@ -117,7 +139,8 @@ def build_receipt_lines(
 
     lines: list[str] = []
     # ---------- cabecalho da loja ----------
-    lines.append(_center(store_name.upper(), width))
+    for ln in _wrap_words(store_name.upper(), width):
+        lines.append(_center(ln, width))
     if store_address:
         for ln in _wrap(store_address, width):
             lines.append(_center(ln, width))
@@ -130,7 +153,13 @@ def build_receipt_lines(
             lines.append(_center(ln, width))
 
     lines.append(_divider(width))
-    lines.append(_center(f"*** {disclaimer} ***", width))
+    # Regra 12: o aviso sai sempre inteiro, mesmo em cupom estreito.
+    marked = f"*** {disclaimer} ***"
+    if len(marked) <= width:
+        lines.append(_center(marked, width))
+    else:
+        for ln in _wrap_words(disclaimer, width):
+            lines.append(_center(ln, width))
     lines.append(_divider(width))
 
     if is_reprint:

@@ -2912,3 +2912,75 @@ html, body {
   border: 1px solid #cad3ec;
   border-radius: 4px;
 }
+
+
+/* Janelas do PDV: fundo branco pede texto escuro (cores herdadas do tema
+   escuro antigo ficavam quase invisiveis na busca F2 e nas legendas). */
+.onix-modal .busca-item { border-bottom-color: #e4d8c8; }
+.onix-modal .busca-item:hover { background: #fdf5e6; }
+.onix-modal .busca-item .busca-nome { color: var(--jm-text); }
+.onix-modal .busca-item .busca-preco { color: var(--jm-ink); }
+.onix-modal .hint,
+.onix-modal label { color: var(--jm-text-soft); }
+
+.onix-modal #remover-lista .busca-item.selected .busca-nome,
+.onix-modal #remover-lista .busca-item.selected .busca-preco { color: #fff; }
+.onix-modal #remover-lista:focus { outline: none; }
+
+/* Formas de pagamento em lista vertical: escolha por setas + Enter. */
+.onix-pay-methods #pay-metodos {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 1px;
+  outline: none;
+}
+.onix-pay-methods #pay-metodos [data-menu-item] {
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+/* Janela de pagamento cabe em 1366x768, com valores legiveis no fundo branco. */
+#modal-pagamento { padding: 8px 20px; }
+#modal-pagamento .modal-content {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 16px);
+}
+#modal-pagamento .modal-header { padding: 6px 16px; flex: none; }
+#modal-pagamento .modal-body { overflow-y: auto; padding: 8px 18px 10px; }
+#modal-pagamento .onix-pay-methods { padding: 6px 10px; margin-bottom: 4px; }
+#modal-pagamento hr { margin: 3px 0; }
+#modal-pagamento .pay-row { padding: 2px 0; }
+#modal-pagamento .pay-discount { flex-wrap: nowrap; }
+#modal-pagamento .pay-discount label { flex: none; margin: 0; }
+#modal-pagamento .pay-discount input { padding: 5px 8px; }
+#modal-pagamento .pay-discount input + input { flex: 1 1 auto; }
+#modal-pagamento .pay-list { margin: 4px 0; }
+#modal-pagamento .modal-actions { margin-top: 4px; padding-top: 6px; }
+.onix-modal .pay-row strong { color: var(--jm-ink); }
+.onix-modal .pay-change strong { color: #2e7d32; }
+.onix-modal .pay-row.pay-change.falta strong { color: #c62828; }
+
+/* Abrir operador: operador escolhido pelas setas fica destacado. */
+#operadores-list .admin-btn:focus {
+  outline: 3px solid var(--jm-accent);
+  outline-offset: 1px;
+}
+
+/* Relatorio de fechamento de caixa. */
+.relatorio-fechamento {
+  width: fit-content;
+  max-width: 100%;
+  max-height: 55vh;
+  overflow: auto;
+  margin: 8px auto;
+  padding: 10px 14px;
+  background: #fff;
+  color: #0f0a05;
+  border: 1px solid #d8cdbd;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.35;
+  white-space: pre;
+}

@@ -7,6 +7,7 @@ Toggle do setting cash_session_required e admin-only.
 
 from __future__ import annotations
 
+import logging
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -22,9 +23,11 @@ from app.dependencies import (
 from app.models import AuditLog, CashMovement, CashSession, User
 from app.schemas import (
     CashCloseIn,
+    CashCloseOut,
     CashMovementOut,
     CashOpenIn,
     CashPaymentTotal,
+    CashReportPrintOut,
     CashRequiredToggle,
     CashSangriaIn,
     CashSessionOut,
@@ -33,7 +36,10 @@ from app.schemas import (
 )
 from app.services import cash_service
 from app.services.cash_service import CashError
+from app.services.printer import PrintJob, get_printer
 
+
+logger = logging.getLogger("cash")
 
 router = APIRouter(prefix="/api/cash", tags=["cash"])
 admin_router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -189,26 +195,74 @@ def suprimento(
 # ---------- fechar ----------
 
 
+def _imprimir_relatorio(
+    db: Session, lines: list[str]
+) -> tuple[bool, Optional[str]]:
+    """Regra 6: impressora nunca desfaz operacao; so devolve o resultado."""
+    try:
+        get_printer(db).print_job(PrintJob(lines=lines))
+        return True, None
+    except Exception as exc:
+        return False, str(exc)
+
+
 @router.post(
     "/close",
-    response_model=CashSessionOut,
+    response_model=CashCloseOut,
     dependencies=[Depends(require_csrf)],
 )
 def close_cash(
     payload: CashCloseIn,
     db: Session = Depends(get_db),
     user: User = Depends(require_user_or_operator),
-) -> CashSessionOut:
+) -> CashCloseOut:
     try:
         s = cash_service.close_session(
             db,
             user=user,
             declared_cash_cents=payload.declared_cash_cents,
-            difference_reason=payload.difference_reason,
         )
     except CashError as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.message)
-    return _session_to_out(db, s)
+
+    # Caixa ja esta fechado e gravado: relatorio nao pode reverter nada.
+    lines: list[str] = []
+    printed = False
+    print_error: Optional[str] = None
+    try:
+        lines = cash_service.close_report_lines(db, s)
+        printed, print_error = _imprimir_relatorio(db, lines)
+    except Exception as exc:
+        logger.exception("Falha ao montar relatorio de fechamento")
+        print_error = str(exc)
+
+    return CashCloseOut(
+        **_session_to_out(db, s).model_dump(),
+        report_lines=lines,
+        printed=printed,
+        print_error=print_error,
+    )
+
+
+@router.post(
+    "/{session_id}/report/print",
+    response_model=CashReportPrintOut,
+    dependencies=[Depends(require_csrf)],
+)
+def print_close_report(
+    session_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_user_or_operator),
+) -> CashReportPrintOut:
+    s = db.get(CashSession, session_id)
+    if s is None:
+        raise HTTPException(status_code=404, detail="Caixa nao encontrado.")
+    if s.status != "closed":
+        raise HTTPException(status_code=409, detail="Este caixa ainda esta aberto.")
+    printed, print_error = _imprimir_relatorio(
+        db, cash_service.close_report_lines(db, s)
+    )
+    return CashReportPrintOut(printed=printed, print_error=print_error)
 
 
 # ---------- admin: toggle setting ----------

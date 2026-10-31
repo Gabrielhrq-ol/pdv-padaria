@@ -152,13 +152,15 @@ class TestAddItem:
         assert item.line_total_cents == 630  # 0,350 x 18,00
         assert sale.total_cents == 630
 
-    def test_agrupamento_mesmo_produto(self, session, user_db, produto_un) -> None:
+    def test_mesmo_produto_gera_linhas_separadas(
+        self, session, user_db, produto_un
+    ) -> None:
         sale = create_open_sale(session, user_db)
-        add_item(session, sale, produto_un, 1000)
-        add_item(session, sale, produto_un, 1000)
+        a = add_item(session, sale, produto_un, 1000)
+        b = add_item(session, sale, produto_un, 1000)
         session.commit()
-        assert len(sale.items) == 1
-        assert sale.items[0].qty_milli == 2000
+        assert a.id != b.id
+        assert [i.qty_milli for i in sale.items] == [1000, 1000]
         assert sale.total_cents == 2400
 
     def test_preco_copiado_nao_muda_depois(

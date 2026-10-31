@@ -115,7 +115,7 @@ class TestAddItem:
         data = r.json()
         assert data["total_cents"] == 630  # 0.350 * 18.00
 
-    def test_bipa_duas_vezes_mesmo_produto_agrupa(
+    def test_bipa_duas_vezes_mesmo_produto_gera_duas_linhas(
         self, caixa_client: TestClient, produto_cadastrado
     ) -> None:
         sale = caixa_client.post("/api/sales").json()
@@ -126,8 +126,31 @@ class TestAddItem:
             f"/api/sales/{sale['id']}/items", json={"code": "7891111111117"}
         )
         data = r.json()
-        assert len(data["items"]) == 1
-        assert data["items"][0]["qty_milli"] == 2000
+        assert [i["qty_milli"] for i in data["items"]] == [1000, 1000]
+        assert data["total_cents"] == 2 * data["items"][0]["line_total_cents"]
+
+    def test_multiplicador_fica_em_uma_linha(
+        self, caixa_client: TestClient, produto_cadastrado
+    ) -> None:
+        sale = caixa_client.post("/api/sales").json()
+        r = caixa_client.post(
+            f"/api/sales/{sale['id']}/items", json={"code": "3*7891111111117"}
+        )
+        data = r.json()
+        assert [i["qty_milli"] for i in data["items"]] == [3000]
+
+    def test_multiplicador_depois_de_bipar_gera_linha_propria(
+        self, caixa_client: TestClient, produto_cadastrado
+    ) -> None:
+        sale = caixa_client.post("/api/sales").json()
+        caixa_client.post(
+            f"/api/sales/{sale['id']}/items", json={"code": "7891111111117"}
+        )
+        r = caixa_client.post(
+            f"/api/sales/{sale['id']}/items", json={"code": "3*7891111111117"}
+        )
+        data = r.json()
+        assert [i["qty_milli"] for i in data["items"]] == [1000, 3000]
 
     def test_produto_inexistente_404(
         self, caixa_client: TestClient, produto_cadastrado

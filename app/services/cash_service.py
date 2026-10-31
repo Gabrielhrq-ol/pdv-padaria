@@ -355,6 +355,31 @@ def build_summary(db: Session, session: CashSession) -> SessionSummary:
     )
 
 
+def close_report_lines(db: Session, session: CashSession) -> list[str]:
+    """Monta o relatorio de fechamento de uma sessao ja fechada."""
+    from app.models import Setting
+    from app.services.close_report import build_close_report_lines
+
+    sales = list(
+        db.execute(
+            select(Sale)
+            .where(Sale.cash_session_id == session.id)
+            .order_by(Sale.number.asc())
+        ).scalars()
+    )
+    opener = db.get(User, session.opened_by)
+    closer = db.get(User, session.closed_by) if session.closed_by else None
+    return build_close_report_lines(
+        session,
+        sales,
+        list(db.execute(select(Setting)).scalars()),
+        suprimentos_cents=_sum_movements_by_type(db, session.id, "suprimento"),
+        sangrias_cents=_sum_movements_by_type(db, session.id, "sangria"),
+        opened_by_name=opener.name if opener else None,
+        closed_by_name=closer.name if closer else None,
+    )
+
+
 # ---------- fechamento ----------
 
 
@@ -370,7 +395,6 @@ def close_session(
     *,
     user: User,
     declared_cash_cents: int,
-    difference_reason: Optional[str] = None,
 ) -> CashSession:
     if type(declared_cash_cents) is not int:
         raise CashError("declared_cash_cents deve ser int.", 422)
@@ -388,17 +412,6 @@ def close_session(
     expected = calculate_expected_cash(db, session_row)
     difference = declared_cash_cents - expected
 
-    if difference != 0:
-        if not difference_reason or len(difference_reason.strip()) < 3:
-            raise CashError(
-                "Motivo obrigatorio quando ha diferenca no fechamento "
-                "(min 3 caracteres).",
-                422,
-            )
-        clean_reason: Optional[str] = difference_reason.strip()[:200]
-    else:
-        clean_reason = None
-
     session_row.status = "closed"
     session_row.closed_by = user.id
     from app.models import utc_now  # evita import circular no topo
@@ -407,7 +420,6 @@ def close_session(
     session_row.closing_cash_declared_cents = declared_cash_cents
     session_row.closing_cash_expected_cents = expected
     session_row.closing_difference_cents = difference
-    session_row.difference_reason = clean_reason
 
     db.add(
         AuditLog(

@@ -77,7 +77,7 @@
     }
     const resp = await fetch(path, opts);
     if (resp.status === 401) {
-      window.location.assign('/login');
+      window.location.assign('/operador?next=/pdv');
       throw new Error('Nao autenticado.');
     }
     const ct = resp.headers.get('content-type') || '';
@@ -404,29 +404,121 @@
     }
   }
 
-  function openCancelModal() {
-    if (!currentSale) { showToast('Nenhuma venda aberta'); return; }
+  // F3: lista os itens da venda para o operador escolher qual cancelar.
+  function openRemover() {
+    const items = (currentSale && currentSale.items) || [];
+    if (!items.length) { showToast('Nenhum item'); return; }
+    const box = document.getElementById('remover-lista');
+    clearNode(box);
+    const inicial = selectedIndex >= 0 && selectedIndex < items.length
+      ? selectedIndex : items.length - 1;
+    items.forEach((it, idx) => {
+      const row = document.createElement('div');
+      row.className = 'busca-item';
+      row.setAttribute('data-menu-item', '');
+      row.dataset.idx = String(idx);
+      if (idx === inicial) row.classList.add('selected');
+      const nome = document.createElement('span');
+      nome.className = 'busca-nome';
+      nome.textContent = String(idx + 1).padStart(3, '0') + '  ' + it.product_name
+        + '  (' + formatQty(it.qty_milli, it.unit) + ')';
+      row.appendChild(nome);
+      const preco = document.createElement('span');
+      preco.className = 'busca-preco';
+      preco.textContent = formatCents(it.line_total_cents);
+      row.appendChild(preco);
+      row.addEventListener('click', () => confirmarRemover(idx));
+      box.appendChild(row);
+    });
+    openModal('modal-remover');
+    // Tira o foco do campo de codigo: Enter ali abriria o pagamento.
+    box.focus();
+    const atual = box.querySelector('.selected');
+    if (atual) atual.scrollIntoView({ block: 'nearest' });
+  }
+
+  async function confirmarRemover(idx) {
+    selectedIndex = idx;
+    closeAllModals();
+    await removeSelected();
+  }
+
+  function abrirCancelamento(titulo, texto, confirmar) {
+    document.getElementById('cancel-titulo').textContent = titulo;
+    document.getElementById('cancel-texto').textContent = texto;
     document.getElementById('cancel-motivo').value = '';
     openModal('modal-cancel');
     document.getElementById('cancel-motivo').focus();
 
-    document.getElementById('cancel-ok').onclick = async () => {
+    const ok = document.getElementById('cancel-ok');
+    ok.disabled = false;
+    ok.onclick = async () => {
       const motivo = document.getElementById('cancel-motivo').value.trim();
       if (!motivo) { showToast('Motivo obrigatorio', 'erro'); return; }
+      ok.disabled = true;
       try {
-        await apiFetch(
-          API_SALES + '/' + currentSale.id,
-          { method: 'DELETE', body: JSON.stringify({ reason: motivo }) }
-        );
-        currentSale = null;
-        selectedIndex = -1;
-        renderSale();
+        await confirmar(motivo);
         closeAllModals();
-        setFeedback('Venda cancelada', 'ok');
       } catch (err) {
         showToast(err.message, 'erro');
+      } finally {
+        ok.disabled = false;
       }
     };
+  }
+
+  // F8: com itens na tela cancela a venda em andamento; sem itens, o ultimo
+  // cupom finalizado do caixa aberto (estorna estoque e sai do esperado).
+  async function openCancelModal() {
+    if (currentSale && currentSale.items && currentSale.items.length) {
+      abrirCancelamento(
+        'Cancelar cupom',
+        'Esta ação cancela a venda em andamento. É registrada no log de auditoria.',
+        async motivo => {
+          await apiFetch(
+            API_SALES + '/' + currentSale.id,
+            { method: 'DELETE', body: JSON.stringify({ reason: motivo }) }
+          );
+          currentSale = null;
+          selectedIndex = -1;
+          renderSale();
+          setFeedback('Venda cancelada', 'ok');
+        }
+      );
+      return;
+    }
+
+    let last;
+    try {
+      last = await apiFetch(API_SALES + '/last-completed');
+    } catch (err) { showToast(err.message, 'erro'); return; }
+    if (!last) { showToast('Nenhum cupom para cancelar'); return; }
+
+    let caixa = null;
+    try { caixa = await apiFetch('/api/cash/current'); } catch (_) { caixa = null; }
+    if (last.cash_session_id && (!caixa || caixa.id !== last.cash_session_id)) {
+      showToast('O último cupom é de um caixa já fechado. Estorne pelo Painel > Vendas.', 'erro');
+      return;
+    }
+
+    const quando = last.finalized_at
+      ? new Date(last.finalized_at + 'Z').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      : '';
+    const numero = String(last.number).padStart(6, '0');
+    const qtd = last.items.length;
+    abrirCancelamento(
+      'Cancelar último cupom',
+      'Cupom ' + numero + ' das ' + quando + ', ' + qtd + (qtd === 1 ? ' item, ' : ' itens, ')
+        + formatCents(last.total_cents) + '. O estoque volta e o valor sai do caixa. '
+        + 'Devolva o dinheiro ao cliente. Fica registrado na auditoria.',
+      async motivo => {
+        await apiFetch(
+          API_SALES + '/' + last.id + '/reverse',
+          { method: 'POST', body: JSON.stringify({ reason: motivo }) }
+        );
+        setFeedback('Cupom ' + numero + ' cancelado: ' + formatCents(last.total_cents), 'ok');
+      }
+    );
   }
 
   // ---------- busca F2 ----------
@@ -622,11 +714,69 @@
     renderPaymentList();
     refreshPaymentCalc();
     openModal('modal-pagamento');
-    // Fase 20: foca no primeiro input de valor pra operador digitar direto
-    setTimeout(() => {
-      const first = document.querySelector('#pay-list input[type="text"]');
-      if (first) { first.focus(); first.select(); }
-    }, 50);
+    marcarMetodo('dinheiro');
+    irParaForma();
+  }
+
+  // Etapas do pagamento pelo teclado: 'forma' (setas) e 'valor' (digita/confirma).
+  let payStage = 'forma';
+  let finalizando = false;
+
+  function marcarMetodo(method) {
+    document.querySelectorAll('#pay-metodos [data-menu-item]').forEach(el => {
+      el.classList.toggle('selected', el.dataset.method === method);
+    });
+  }
+
+  function aplicarMetodo(method) {
+    marcarMetodo(method);
+    if (payState.payments.length) {
+      payState.payments[0].method = method;
+      renderPaymentList();
+      refreshPaymentCalc();
+    }
+  }
+
+  function irParaForma() {
+    payStage = 'forma';
+    document.getElementById('pay-metodos').focus();
+  }
+
+  function irParaValor() {
+    payStage = 'valor';
+    const first = document.querySelector('#pay-list input[type="text"]');
+    if (first) { first.focus(); first.select(); }
+  }
+
+  async function finalizarPeloTeclado() {
+    if (finalizando) return;
+    finalizando = true;
+    try { await doFinalize(true); }
+    finally { finalizando = false; }
+  }
+
+  // Setas e Enter dentro do pagamento. Devolve true se tratou a tecla.
+  function handlePayNav(ev) {
+    const active = document.activeElement;
+    const tag = (active && active.tagName || '').toLowerCase();
+    if (ev.key === 'ArrowUp' || ev.key === 'ArrowDown') {
+      if (tag === 'select') return true;  // deixa o proprio select mudar
+      ev.preventDefault();
+      const list = document.getElementById('pay-metodos');
+      irParaForma();
+      navigateMenu(list, ev.key === 'ArrowDown' ? 1 : -1);
+      const sel = list.querySelector('[data-menu-item].selected');
+      if (sel) aplicarMetodo(sel.dataset.method);
+      return true;
+    }
+    if (ev.key !== 'Enter') return false;
+    if (tag === 'button') return false;  // Enter normal no botao focado
+    ev.preventDefault();
+    if (ev.repeat) return true;  // Enter segurado nao avanca etapa
+    const noDesconto = active && (active.id === 'pay-discount-input' || active.id === 'pay-discount-reason');
+    if (payStage === 'forma' || noDesconto) { irParaValor(); return true; }
+    finalizarPeloTeclado();
+    return true;
   }
 
   // Fase 20: dentro do modal pagamento, teclas 1-5 trocam metodo do primeiro
@@ -643,11 +793,8 @@
     const methods = ['dinheiro', 'debito', 'credito', 'pix', 'outros'];
     const method = methods[parseInt(ev.key, 10) - 1];
     if (!method) return;
-    if (payState.payments.length) {
-      payState.payments[0].method = method;
-      renderPaymentList();
-      refreshPaymentCalc();
-    }
+    aplicarMetodo(method);
+    irParaValor();
   }
 
   async function doFinalize(print_receipt) {
@@ -714,10 +861,12 @@
   }
 
   function closeAllModals() {
-    ['modal-busca', 'modal-qty', 'modal-preco', 'modal-cancel', 'modal-pagamento'].forEach(id => {
+    ['modal-busca', 'modal-remover', 'modal-qty', 'modal-preco', 'modal-cancel', 'modal-pagamento'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.hidden = true;
     });
+    const cupom = document.getElementById('modal-cupom-full');
+    if (cupom) cupom.remove();
     document.getElementById('pdv-code').focus();
   }
 
@@ -762,6 +911,8 @@
     if (!code) {
       // Fase 20: Enter com codigo vazio abre pagamento (padrao Onix).
       ev.preventDefault();
+      ev.stopPropagation();  // este Enter so abre; nao pode confirmar a forma
+      if (ev.repeat) return;
       openPagamento();
       return;
     }
@@ -841,24 +992,43 @@
   }
 
   function handleGlobalKey(ev) {
-    // Esc OU Tab fecha modais (padrao Onix)
-    if (ev.key === 'Escape') { closeAllModals(); return; }
-    if (ev.key === 'Tab' && anyModalOpen()) {
+    // Esc OU Tab voltam para a tela anterior (padrao Onix)
+    if (ev.key === 'Escape' || (ev.key === 'Tab' && anyModalOpen())) {
       ev.preventDefault();
-      closeAllModals();
+      const ops = document.getElementById('modal-operacoes');
+      if (ops && !ops.hidden && window.PdvOperacoes) window.PdvOperacoes.voltar();
+      else closeAllModals();
       return;
+    }
+
+    const pagamento = document.getElementById('modal-pagamento');
+    if (pagamento && !pagamento.hidden && handlePayNav(ev)) return;
+
+    // Com a lista do F3 aberta, so setas e Enter valem.
+    const remover = document.getElementById('modal-remover');
+    if (remover && !remover.hidden) {
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        const sel = remover.querySelector('[data-menu-item].selected');
+        if (sel) confirmarRemover(parseInt(sel.dataset.idx, 10));
+        return;
+      }
+      if (ev.key !== 'ArrowUp' && ev.key !== 'ArrowDown') {
+        if (/^F\d+$/.test(ev.key)) ev.preventDefault();
+        return;
+      }
     }
 
     // Teclas de funcao (Fase 20: atalhos pedidos por Gabriel)
     if (ev.key === 'F1') { ev.preventDefault(); openMenuFuncoes(); return; }
     if (ev.key === 'F2') { ev.preventDefault(); openBusca(); return; }
-    if (ev.key === 'F3') { ev.preventDefault(); removeSelected(); return; }   // F3 cancela item
+    if (ev.key === 'F3') { ev.preventDefault(); openRemover(); return; }   // F3 lista itens para cancelar
     if (ev.key === 'F8') { ev.preventDefault(); openCancelModal(); return; }
     if (ev.key === 'F10') { ev.preventDefault(); reprintLast(); return; }
     if (ev.key === 'F11') { ev.preventDefault(); openCupomCompleto(); return; }
 
     // F4/F9 preservados pra compat antiga; F6 reservado pra abrir gaveta eletronica no futuro
-    if (ev.key === 'F4') { ev.preventDefault(); removeSelected(); return; }
+    if (ev.key === 'F4') { ev.preventDefault(); openRemover(); return; }
     if (ev.key === 'F9') { ev.preventDefault(); openPreco(); return; }
     if (ev.key === 'F12') {
       ev.preventDefault();
@@ -886,7 +1056,7 @@
       const k = ev.key.toLowerCase();
       if (k === 'b') { ev.preventDefault(); openBusca(); return; }
       if (k === 'q') { ev.preventDefault(); changeQtySelected(); return; }
-      if (k === 'd') { ev.preventDefault(); removeSelected(); return; }
+      if (k === 'd') { ev.preventDefault(); openRemover(); return; }
       if (k === 'x') {
         if (!anyModalOpen()) {
           ev.preventDefault(); openCancelModal(); return;
@@ -940,7 +1110,7 @@
     const action = btn.dataset.action;
     if (action === 'buscar') return openBusca();
     if (action === 'qty') return changeQtySelected();
-    if (action === 'remover') return removeSelected();
+    if (action === 'remover') return openRemover();
     if (action === 'cancelar') return openCancelModal();
     if (action === 'preco') return openPreco();
     if (action === 'pagar') return openPagamento();
@@ -976,6 +1146,13 @@
       if (ev.key === 'Enter') { ev.preventDefault(); doConsultaPreco(ev.currentTarget.value.trim()); }
     });
 
+    document.getElementById('cancel-motivo').addEventListener('keydown', ev => {
+      if (ev.key !== 'Enter') return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (!ev.repeat) document.getElementById('cancel-ok').click();
+    });
+
     // Modal pagamento
     document.getElementById('pay-discount-input').addEventListener('input', refreshPaymentCalc);
     document.getElementById('pay-discount-reason').addEventListener('input', () => {
@@ -985,6 +1162,9 @@
       payState.payments.push({ method: 'dinheiro', amountStr: '0,00' });
       renderPaymentList();
       refreshPaymentCalc();
+    });
+    document.querySelectorAll('#pay-metodos [data-menu-item]').forEach(el => {
+      el.addEventListener('click', () => { aplicarMetodo(el.dataset.method); irParaValor(); });
     });
     document.getElementById('pay-print').addEventListener('click', () => doFinalize(true));
     document.getElementById('pay-no-print').addEventListener('click', () => doFinalize(false));

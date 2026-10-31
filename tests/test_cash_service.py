@@ -361,26 +361,19 @@ class TestFechamento:
         assert closed.difference_reason is None
         assert closed.closed_by == admin_db.id
 
-    def test_fechar_com_sobra_requer_motivo(self, session, admin_db):
+    def test_fechar_com_sobra_nao_pede_motivo(self, session, admin_db):
         open_session(session, user=admin_db, opening_cash_cents=10000)
-        with pytest.raises(CashError):
-            close_session(session, user=admin_db, declared_cash_cents=10100)
+        closed = close_session(session, user=admin_db, declared_cash_cents=10100)
+        assert closed.status == "closed"
+        assert closed.closing_difference_cents == 100
+        assert closed.difference_reason is None
 
-    def test_fechar_com_falta_requer_motivo(self, session, admin_db):
+    def test_fechar_com_falta_nao_pede_motivo(self, session, admin_db):
         open_session(session, user=admin_db, opening_cash_cents=10000)
-        with pytest.raises(CashError):
-            close_session(session, user=admin_db, declared_cash_cents=9500)
-
-    def test_fechar_com_diferenca_e_motivo(self, session, admin_db):
-        open_session(session, user=admin_db, opening_cash_cents=10000)
-        closed = close_session(
-            session,
-            user=admin_db,
-            declared_cash_cents=9950,
-            difference_reason="faltou 50 centavos de troco",
-        )
-        assert closed.closing_difference_cents == -50
-        assert closed.difference_reason == "faltou 50 centavos de troco"
+        closed = close_session(session, user=admin_db, declared_cash_cents=9500)
+        assert closed.status == "closed"
+        assert closed.closing_difference_cents == -500
+        assert closed.difference_reason is None
 
     def test_fechar_sem_sessao_falha(self, session, admin_db):
         with pytest.raises(CashError) as exc:

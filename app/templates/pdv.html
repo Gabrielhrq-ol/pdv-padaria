@@ -116,6 +116,20 @@
   </div>
 </div>
 
+<!-- Cancelar item (F3): lista os itens da venda para escolher -->
+<div id="modal-remover" class="modal onix-modal" hidden aria-modal="true" role="dialog">
+  <div class="modal-content">
+    <header class="modal-header">
+      <h2>Cancelar item</h2>
+      <button type="button" class="btn-close" data-close="modal-remover">×</button>
+    </header>
+    <div class="modal-body">
+      <p class="hint">Setas escolhem, Enter cancela o item, Esc volta. Ou clique no item.</p>
+      <div id="remover-lista" class="busca-resultado" data-nav="menu" tabindex="-1"></div>
+    </div>
+  </div>
+</div>
+
 <!-- Alterar qty (F3 legado / Ctrl+Q) -->
 <div id="modal-qty" class="modal onix-modal" hidden aria-modal="true" role="dialog">
   <div class="modal-content">
@@ -158,13 +172,13 @@
     </header>
     <div class="modal-body">
       <div class="onix-pay-methods">
-        <div class="hint">Aperte 1-5 pra trocar a forma do primeiro pagamento:</div>
-        <div class="onix-pay-methods-list">
-          <span><kbd>1</kbd> Dinheiro</span>
-          <span><kbd>2</kbd> Débito</span>
-          <span><kbd>3</kbd> Crédito</span>
-          <span><kbd>4</kbd> PIX</span>
-          <span><kbd>5</kbd> Outros</span>
+        <div class="hint">Setas escolhem, Enter confirma. Depois confira o valor e Enter finaliza.</div>
+        <div class="onix-pay-methods-list" id="pay-metodos" data-nav="menu" tabindex="-1">
+          <span data-menu-item data-method="dinheiro"><kbd>1</kbd> Dinheiro</span>
+          <span data-menu-item data-method="debito"><kbd>2</kbd> Débito</span>
+          <span data-menu-item data-method="credito"><kbd>3</kbd> Crédito</span>
+          <span data-menu-item data-method="pix"><kbd>4</kbd> PIX</span>
+          <span data-menu-item data-method="outros"><kbd>5</kbd> Outros</span>
         </div>
       </div>
 
@@ -212,11 +226,11 @@
 <div id="modal-cancel" class="modal onix-modal" hidden aria-modal="true" role="dialog">
   <div class="modal-content">
     <header class="modal-header">
-      <h2>Cancelar cupom</h2>
+      <h2 id="cancel-titulo">Cancelar cupom</h2>
       <button type="button" class="btn-close" data-close="modal-cancel">×</button>
     </header>
     <div class="modal-body">
-      <p>Esta ação cancela a venda inteira. É registrada no log de auditoria.</p>
+      <p id="cancel-texto">Esta ação cancela a venda inteira. É registrada no log de auditoria.</p>
       <label for="cancel-motivo">Motivo:</label>
       <input type="text" id="cancel-motivo" maxlength="200" autofocus>
       <div class="modal-actions">

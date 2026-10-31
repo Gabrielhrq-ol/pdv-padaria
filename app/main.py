@@ -40,6 +40,7 @@ from app.routers import backup as backup_router
 from app.routers import cash as cash_router
 from app.routers import pdv as pdv_router
 from app.routers import products as products_router
+from app.routers.pdv import get_pdv_operator
 from app.routers import reports as reports_router
 from app.routers import sales as sales_router
 from app.routers import users as users_router
@@ -224,17 +225,36 @@ async def products_page(
     )
 
 
+OPERADOR_DESTINOS = {"/pdv", "/caixa"}
+
+
+@app.get("/operador", include_in_schema=False, response_model=None)
+async def operador_page(request: Request, next: str = "/pdv") -> HTMLResponse:
+    """Tela de abrir operador. `next` so aceita destinos internos conhecidos."""
+    return templates.TemplateResponse(
+        request=request,
+        name="operador.html",
+        context={
+            "env": settings.ENVIRONMENT,
+            "next_url": next if next in OPERADOR_DESTINOS else "/pdv",
+        },
+    )
+
+
 @app.get("/pdv", include_in_schema=False, response_model=None)
 async def pdv_page(
     request: Request,
     user: User | None = Depends(get_optional_user),
+    operator: User | None = Depends(get_pdv_operator),
     db: Session = Depends(get_db),
 ) -> HTMLResponse | RedirectResponse:
     """
-    Fase 18: PDV e PUBLICO (sem login). Operador se identifica num
-    dropdown no proprio PDV via cookie operator_id. Admin logado
-    acessa normalmente.
+    PDV sem senha, mas so funciona com operador aberto (cookie operator_id),
+    mesmo para admin logado no painel.
     """
+    if operator is None:
+        return RedirectResponse(url="/operador?next=/pdv", status_code=302)
+
     # Guard: se cash required e nao ha caixa aberto, manda pra /caixa
     from app.services.cash_service import get_open_session, is_cash_required
 
@@ -259,11 +279,15 @@ async def pdv_page(
 async def caixa_page(
     request: Request,
     user: User | None = Depends(get_optional_user),
+    operator: User | None = Depends(get_pdv_operator),
 ) -> HTMLResponse | RedirectResponse:
     """
-    Fase 18: pagina do caixa agora e publica (parte do fluxo do PDV).
-    Operador identificado via cookie operator_id. Admin logado passa igual.
+    Pagina do caixa sem senha, mas so funciona com operador aberto
+    (cookie operator_id), mesmo para admin logado no painel.
     """
+    if operator is None:
+        return RedirectResponse(url="/operador?next=/caixa", status_code=302)
+
     user_ctx = (
         {"name": user.name, "username": user.username, "role": user.role}
         if user else None
@@ -274,6 +298,7 @@ async def caixa_page(
         context={
             "env": settings.ENVIRONMENT,
             "user": user_ctx,
+            "operator_name": operator.name,
         },
     )
 

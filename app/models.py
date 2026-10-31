@@ -315,7 +315,7 @@ class CashSession(Base):
     closing_cash_declared_cents: dinheiro contado no fechamento (declarado).
     closing_cash_expected_cents: calculado em close_session.
     closing_difference_cents: declarado - esperado (signed; sobra +, falta -).
-    difference_reason: obrigatorio se closing_difference_cents != 0.
+    difference_reason: legado; fechamentos novos nao pedem motivo.
     """
 
     __tablename__ = "cash_sessions"

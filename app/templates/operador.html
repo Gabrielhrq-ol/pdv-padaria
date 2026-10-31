@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Abrir operador &middot; João &amp; Maria{% endblock %}
+{% block body_class %}login-body-v2{% endblock %}
+
+{% block body %}
+<main class="login-wrapper-v2" id="operador-page" data-next="{{ next_url }}">
+  <a href="/" class="login-back">&larr; voltar</a>
+
+  <div class="login-card-v2">
+    <img src="/static/img/logo.png" alt="João &amp; Maria" class="login-logo-img">
+
+    <h1>Abrir operador</h1>
+    <p class="login-sub-v2">O caixa só funciona com um operador aberto. Setas escolhem, Enter abre.</p>
+
+    <div id="operadores-list" class="admins-list" aria-busy="true">
+      <p class="admins-loading">Carregando...</p>
+    </div>
+
+    <div id="erro-operador" class="erro-form" hidden></div>
+  </div>
+</main>
+<script src="/static/js/operador.js"></script>
+{% endblock %}

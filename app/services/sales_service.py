@@ -2,7 +2,8 @@
 Logica central de vendas. Funcao pura testavel (recebe Session).
 
 Fase 3: criar venda em open, adicionar/alterar/remover item, cancelar.
-Agrupamento automatico de item (mesma product_id = soma qty).
+Cada adicao gera uma linha nova no cupom, mesmo para o mesmo produto.
+Quantidade em uma linha so vem de multiplicador (3*cod) ou alteracao manual.
 Preco COPIADO do produto no momento do add (CLAUDE.md regra 4).
 
 Fase 4 vai adicionar `finalize_sale` com transacao atomica
@@ -148,13 +149,6 @@ def _assert_open(sale: Sale) -> None:
         )
 
 
-def _find_item(sale: Sale, product_id: int) -> Optional[SaleItem]:
-    for it in sale.items:
-        if it.product_id == product_id:
-            return it
-    return None
-
-
 def add_item(
     db: Session,
     sale: Sale,
@@ -162,25 +156,14 @@ def add_item(
     qty_milli: int,
 ) -> SaleItem:
     """
-    Adiciona (ou agrupa) item na venda em aberto. Copia name/barcode/unit/price.
+    Adiciona uma linha nova na venda em aberto, sem agrupar com linhas do
+    mesmo produto. Copia name/barcode/unit/price.
     """
     _assert_open(sale)
     if not product.active:
         raise SalesError(f"Produto inativo: {product.name}", 400)
     if type(qty_milli) is not int or qty_milli <= 0:
         raise SalesError("Quantidade deve ser inteiro positivo.", 422)
-
-    existing = _find_item(sale, product.id)
-    if existing is not None:
-        new_qty = existing.qty_milli + qty_milli
-        existing.qty_milli = new_qty
-        existing.line_total_cents = line_total_cents(
-            existing.unit_price_cents, new_qty
-        )
-        db.flush()
-        _recalculate_totals(sale)
-        db.flush()
-        return existing
 
     item = SaleItem(
         sale_id=sale.id,

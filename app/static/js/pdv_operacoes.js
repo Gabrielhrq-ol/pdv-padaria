@@ -37,7 +37,7 @@
     }
     const resp = await fetch(path, opts);
     if (resp.status === 401) {
-      window.location.assign('/login');
+      window.location.assign('/operador?next=/pdv');
       throw new Error('Nao autenticado.');
     }
     const body = await resp.json().catch(() => ({}));
@@ -117,12 +117,27 @@
     render();
   }
 
+  // Depois de fechar o caixa, qualquer saida do modal recarrega o PDV.
+  let recarregarAoFechar = false;
+
   function closeModal() {
     const m = document.getElementById('modal-operacoes');
     m.hidden = true;
+    if (recarregarAoFechar) { window.location.reload(); return; }
+    const code = document.getElementById('pdv-code');
+    if (code) code.focus();
+  }
+
+  // Tab/Esc: do formulario volta ao menu; do menu volta para a venda.
+  let noFormulario = false;
+
+  function voltar() {
+    if (noFormulario && !recarregarAoFechar) render();
+    else closeModal();
   }
 
   async function render() {
+    noFormulario = false;
     const body = document.getElementById('ops-body');
     clearNode(body);
     body.appendChild(el('p', null, ['Carregando...']));
@@ -303,6 +318,7 @@
   // --- formularios inline (abrem no lugar dos cards) ---
 
   function showForm(kind) {
+    noFormulario = true;
     const body = document.getElementById('ops-body');
     clearNode(body);
     if (kind === 'sangria') renderSangriaForm(body);
@@ -418,10 +434,6 @@
         el('label', null, ['Diferenca']),
         diffBox,
       ]),
-      el('div', { className: 'form-row', id: 'ops-fc-reason-row', hidden: 'hidden' }, [
-        el('label', null, ['Motivo da diferenca (min 3) *']),
-        el('input', { type: 'text', id: 'ops-fc-reason', maxlength: '200' }),
-      ]),
       el('div', { className: 'erro-form', id: 'ops-fc-erro', hidden: 'hidden' }, []),
       el('div', { className: 'modal-actions' }, [
         el('button', { type: 'button', className: 'btn', onclick: render }, ['Voltar']),
@@ -431,17 +443,15 @@
     body.appendChild(form);
 
     const declaredInput = document.getElementById('ops-fc-declared');
-    const reasonRow = document.getElementById('ops-fc-reason-row');
 
     declaredInput.addEventListener('input', () => {
       try {
         const declared = parseBRL(declaredInput.value);
         const diff = declared - expected;
-        diffBox.textContent = (diff > 0 ? '+' : '') + formatBRL(diff);
-        reasonRow.hidden = diff === 0;
+        if (diff === 0) diffBox.textContent = formatBRL(0);
+        else diffBox.textContent = (diff > 0 ? 'Sobra ' : 'Falta ') + formatBRL(Math.abs(diff));
       } catch (_) {
         diffBox.textContent = '—';
-        reasonRow.hidden = true;
       }
     });
 
@@ -452,27 +462,50 @@
       let declared;
       try { declared = parseBRL(declaredInput.value); }
       catch (e) { erro.textContent = e.message; erro.hidden = false; return; }
-      const payload = { declared_cash_cents: declared };
-      const diff = declared - expected;
-      if (diff !== 0) {
-        const reason = document.getElementById('ops-fc-reason').value.trim();
-        if (reason.length < 3) {
-          erro.textContent = 'Motivo min 3 caracteres (ha diferenca).';
-          erro.hidden = false; return;
-        }
-        payload.difference_reason = reason;
-      }
       try {
-        await apiFetch(API_CLOSE, { method: 'POST', body: JSON.stringify(payload) });
-        // Caixa fechado — se setting on, o backend vai redirecionar o PDV
-        // na proxima tentativa de venda. Avisamos e fechamos.
-        closeModal();
-        if (window.showPdvToast) window.showPdvToast('Caixa fechado.', 'ok');
-        // Reload do PDV pra pegar o novo estado (sem caixa aberto).
-        setTimeout(() => window.location.reload(), 800);
+        const result = await apiFetch(API_CLOSE, {
+          method: 'POST',
+          body: JSON.stringify({ declared_cash_cents: declared }),
+        });
+        renderRelatorio(body, result);
       } catch (e) { erro.textContent = e.message; erro.hidden = false; }
     });
     declaredInput.focus();
+  }
+
+  function textoImpressao(printed, erro) {
+    return printed
+      ? 'Relatório enviado para a impressora.'
+      : 'Não imprimiu: ' + (erro || 'erro desconhecido') + '. O caixa está fechado.';
+  }
+
+  // Caixa ja fechado: mostra o relatorio e recarrega o PDV ao concluir.
+  function renderRelatorio(body, result) {
+    recarregarAoFechar = true;
+    clearNode(body);
+    const status = el('p', { className: 'hint' }, [textoImpressao(result.printed, result.print_error)]);
+    const concluir = el('button', {
+      type: 'button',
+      className: 'btn btn-primary',
+      onclick: closeModal,
+    }, ['Concluir']);
+    body.appendChild(el('h3', null, ['Caixa fechado']));
+    body.appendChild(status);
+    body.appendChild(el('pre', { className: 'relatorio-fechamento' }, [(result.report_lines || []).join('\n')]));
+    body.appendChild(el('div', { className: 'modal-actions' }, [
+      el('button', {
+        type: 'button',
+        className: 'btn',
+        onclick: async () => {
+          try {
+            const r = await apiFetch('/api/cash/' + result.id + '/report/print', { method: 'POST' });
+            status.textContent = textoImpressao(r.printed, r.print_error);
+          } catch (e) { status.textContent = 'Erro: ' + e.message; }
+        },
+      }, ['Imprimir de novo']),
+      concluir,
+    ]));
+    concluir.focus();
   }
 
   // ---------- init ----------
@@ -493,5 +526,6 @@
   window.PdvOperacoes = {
     open: openModal,
     close: closeModal,
+    voltar: voltar,
   };
 })();

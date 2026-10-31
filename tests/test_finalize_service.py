@@ -292,6 +292,29 @@ class TestEstoqueBateComMovements:
         assert produto_un.stock_milli == inicial + soma
         assert len(movs) == 3
 
+    def test_linhas_repetidas_baixam_e_estornam_estoque(
+        self, session, user_db, produto_un, payment_methods_setting
+    ) -> None:
+        inicial = produto_un.stock_milli
+        sale = create_open_sale(session, user_db)
+        add_item(session, sale, produto_un, 1000)
+        add_item(session, sale, produto_un, 1000)
+        add_item(session, sale, produto_un, 3000)
+        session.commit()
+        finalize_sale(session, sale, user_db, [("dinheiro", 6000)])
+        session.commit()
+        session.refresh(produto_un)
+        assert produto_un.stock_milli == inicial - 5000
+
+        reverse_sale(session, sale, user_db, "cliente desistiu")
+        session.commit()
+        session.refresh(produto_un)
+        assert produto_un.stock_milli == inicial
+        movs = session.execute(
+            select(StockMovement).where(StockMovement.product_id == produto_un.id)
+        ).scalars().all()
+        assert sum(m.qty_milli for m in movs) == 0
+
 
 # ---------- reverse_sale ----------
 

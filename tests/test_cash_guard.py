@@ -82,14 +82,22 @@ def _habilitar_cash_via_client(admin_client: TestClient) -> None:
     assert r.status_code == 200, r.text
 
 
+def _abrir_operador(client: TestClient) -> None:
+    uid = client.get("/auth/me").json()["id"]
+    r = client.post("/api/pdv/select-operator", json={"operator_id": uid})
+    assert r.status_code == 200, r.text
+
+
 class TestPdvGuard:
     def test_pdv_sem_setting_funciona(self, admin_client: TestClient) -> None:
+        _abrir_operador(admin_client)
         r = admin_client.get("/pdv")
         assert r.status_code == 200
 
     def test_pdv_com_setting_sem_caixa_redireciona(
         self, admin_client: TestClient
     ) -> None:
+        _abrir_operador(admin_client)
         _habilitar_cash_via_client(admin_client)
         r = admin_client.get("/pdv", follow_redirects=False)
         assert r.status_code == 302
@@ -98,6 +106,7 @@ class TestPdvGuard:
     def test_pdv_com_setting_e_caixa_aberto_funciona(
         self, admin_client: TestClient
     ) -> None:
+        _abrir_operador(admin_client)
         _habilitar_cash_via_client(admin_client)
         r = admin_client.post(
             "/api/cash/open", json={"opening_cash_cents": 10000}
@@ -109,6 +118,7 @@ class TestPdvGuard:
     def test_pdv_apos_fechar_caixa_volta_a_redirecionar(
         self, admin_client: TestClient
     ) -> None:
+        _abrir_operador(admin_client)
         _habilitar_cash_via_client(admin_client)
         admin_client.post("/api/cash/open", json={"opening_cash_cents": 100})
         admin_client.post(

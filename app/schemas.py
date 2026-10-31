@@ -235,6 +235,7 @@ class SaleOut(StrictBase):
     id: int
     number: int
     user_id: int
+    cash_session_id: Optional[int] = None
     status: SaleStatus
     subtotal_cents: int
     discount_cents: int
@@ -444,20 +445,11 @@ class CashSuprimentoIn(StrictBase):
 class CashCloseIn(StrictBase):
     """
     Fecha a sessao atual.
-    - declared_cash_cents: dinheiro contado fisicamente.
-    - difference_reason: obrigatorio se declared != esperado.
+    - declared_cash_cents: dinheiro contado fisicamente. Sobra ou falta nao
+      pedem motivo; a diferenca fica registrada e sai no relatorio.
     """
 
     declared_cash_cents: int = Field(..., ge=0, le=100_000_000)
-    difference_reason: Optional[CashReasonOptional] = None
-
-    @field_validator("difference_reason")
-    @classmethod
-    def _empty_reason_as_none(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        s = v.strip()
-        return s or None
 
 
 class CashRequiredToggle(StrictBase):
@@ -498,6 +490,19 @@ class CashSessionOut(StrictBase):
     closing_difference_cents: Optional[int]
     difference_reason: Optional[str]
     notes: Optional[str]
+
+
+class CashCloseOut(CashSessionOut):
+    """Sessao fechada + relatorio. Falha de impressao nao desfaz o fechamento."""
+
+    report_lines: list[str] = Field(default_factory=list)
+    printed: bool = False
+    print_error: Optional[str] = None
+
+
+class CashReportPrintOut(StrictBase):
+    printed: bool
+    print_error: Optional[str] = None
 
 
 class CashSessionSummaryOut(StrictBase):

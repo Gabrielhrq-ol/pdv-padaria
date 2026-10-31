@@ -8,7 +8,7 @@
   <div class="header-actions">
     <span class="env-badge">{{ env }}</span>
     <span class="user-info">
-      {{ user.name }} <small>({{ user.role }})</small>
+      Operador: {{ operator_name }}
     </span>
     <a href="/products" class="btn btn-sm">Produtos</a>
     <a href="/pdv" class="btn btn-sm">PDV</a>
@@ -24,7 +24,7 @@
   <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
 
   {% if user.role == 'admin' %}
-  <section class="card">
+  <section class="card" id="card-config">
     <h2>Configuracao</h2>
     <label>
       <input type="checkbox" id="toggle-cash-required">
@@ -33,6 +33,16 @@
     </label>
   </section>
   {% endif %}
+
+  <!-- RELATORIO DO ULTIMO FECHAMENTO -->
+  <section class="card" id="panel-relatorio" hidden>
+    <h2>Fechamento do caixa</h2>
+    <p class="hint" id="relatorio-status"></p>
+    <pre class="relatorio-fechamento" id="relatorio-linhas"></pre>
+    <div class="form-actions">
+      <button type="button" class="btn" id="btn-reimprimir-relatorio">Imprimir de novo</button>
+    </div>
+  </section>
 
   <!-- SEM CAIXA ABERTO -->
   <section class="card" id="panel-abrir" hidden>
@@ -147,8 +157,8 @@
     <section class="card">
       <h3>Fechar caixa</h3>
       <p class="hint">
-        Conte o dinheiro em especie e informe o valor. Se houver diferenca
-        em rela&ccedil;&atilde;o ao esperado, o sistema vai pedir motivo.
+        Conte o dinheiro em especie e informe o valor. Ao fechar, sai o
+        relat&oacute;rio com as vendas do caixa.
       </p>
       <form id="form-fechar" novalidate>
         <div class="form-row-grid">
@@ -164,11 +174,6 @@
             <label>Diferenca</label>
             <strong id="fechar-diferenca">—</strong>
           </div>
-        </div>
-        <div class="form-row" id="row-fechar-reason" hidden>
-          <label for="fechar-reason">Motivo da diferenca *</label>
-          <textarea id="fechar-reason" maxlength="200" rows="2"
-                    placeholder="Ex: faltou troco, cliente levou errado"></textarea>
         </div>
         <div class="erro-form" id="fechar-erro" hidden></div>
         <div class="form-actions">
