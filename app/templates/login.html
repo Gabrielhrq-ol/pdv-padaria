@@ -3,58 +3,26 @@
 {% block title %}Entrar &middot; João &amp; Maria{% endblock %}
 {% block body_class %}login-body-v2{% endblock %}
 
-{% block head %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-{% endblock %}
-
 {% block body %}
 <main class="login-wrapper-v2">
   <a href="/" class="login-back">&larr; voltar</a>
 
   <div class="login-card-v2">
-    <img src="/static/img/logo.jpeg" alt="João &amp; Maria" class="login-logo-img">
+    <img src="/static/img/logo.png" alt="João &amp; Maria" class="login-logo-img">
 
     <h1>Painel do dono</h1>
-    <p class="login-sub-v2">entre para gerenciar</p>
+    <p class="login-sub-v2">Selecione quem vai entrar</p>
 
-    <form id="form-login" novalidate>
-      <div class="form-row">
-        <label for="field-username">Usu&aacute;rio</label>
-        <input
-          type="text"
-          id="field-username"
-          name="username"
-          autocomplete="username"
-          maxlength="50"
-          required
-          autofocus
-          pattern="[A-Za-z0-9._\-]+">
-      </div>
+    <div id="admins-list" class="admins-list" aria-busy="true">
+      <p class="admins-loading">Carregando...</p>
+    </div>
 
-      <div class="form-row">
-        <label for="field-password">Senha</label>
-        <input
-          type="password"
-          id="field-password"
-          name="password"
-          autocomplete="current-password"
-          maxlength="200"
-          required>
-      </div>
-
-      <div id="erro-login" class="erro-form" hidden></div>
-
-      <button type="submit" id="btn-entrar" class="btn-login">
-        Entrar
-      </button>
-    </form>
+    <div id="erro-login" class="erro-form" hidden></div>
 
     <footer class="login-footer-v2">
       <small>{{ env }}</small>
     </footer>
   </div>
 </main>
-<script src="/static/js/auth.js"></script>
+<script src="/static/js/login.js"></script>
 {% endblock %}

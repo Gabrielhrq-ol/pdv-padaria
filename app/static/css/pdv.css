@@ -1517,8 +1517,10 @@ html, body {
 }
 
 .home-card h2 {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 28px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
   margin: 4px 0;
   color: var(--pao-dark);
 }
@@ -1880,26 +1882,81 @@ html, body {
 
 .login-logo,
 .login-logo-img {
-  width: 180px;
+  width: 200px;
   max-width: 100%;
   height: auto;
-  margin-bottom: 14px;
-  border-radius: 10px;
-  box-shadow: 0 4px 14px rgba(93, 58, 26, 0.2);
+  margin-bottom: 10px;
+  filter: drop-shadow(0 4px 10px rgba(93, 58, 26, 0.22));
 }
 
 .login-card-v2 h1 {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 28px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
   color: var(--pao-dark);
   margin: 4px 0 0;
 }
 
 .login-sub-v2 {
   color: var(--pao);
-  font-style: italic;
-  margin: 4px 0 24px;
-  opacity: 0.8;
+  font-size: 14px;
+  margin: 4px 0 20px;
+  opacity: 0.75;
+}
+
+.admins-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.admins-loading,
+.admins-empty {
+  color: var(--pao);
+  opacity: 0.7;
+  font-size: 14px;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.admin-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  background: #fff;
+  border: 1.5px solid #e8dcc8;
+  border-radius: 10px;
+  color: var(--pao-dark);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.1s ease, background 0.15s ease;
+  text-align: left;
+}
+
+.admin-btn:hover {
+  border-color: var(--vinho);
+  background: #fff8f0;
+}
+
+.admin-btn:active { transform: translateY(1px); }
+
+.admin-btn:disabled,
+.admin-btn.loading {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.admin-btn-arrow {
+  color: var(--vinho);
+  font-size: 20px;
+  font-weight: 700;
 }
 
 .login-card-v2 .form-row {
@@ -1964,14 +2021,13 @@ html, body {
    FASE 19: PDV mais limpo + logo real
    ===================================================================== */
 
-/* Logo real da padaria Joao & Maria (JPEG com fundo preto embutido) */
+/* Logo real da padaria Joao & Maria (PNG transparente) */
 .home-logo-img {
-  width: 300px;
+  width: 320px;
   max-width: 100%;
   height: auto;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(93, 58, 26, 0.25);
-  margin-bottom: 16px;
+  filter: drop-shadow(0 6px 14px rgba(93, 58, 26, 0.25));
+  margin-bottom: 8px;
 }
 
 /* Logo real no PDV - redonda, com borda sutil */

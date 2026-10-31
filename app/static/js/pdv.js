@@ -255,12 +255,6 @@
         btn.className = 'fav-btn-market';
         btn.dataset.productId = String(p.id);
         btn.title = p.name + ' - ' + formatCents(p.price_cents) + '/' + p.unit;
-        if (idx < 9) {
-          const kbd = document.createElement('span');
-          kbd.className = 'fav-btn-shortcut';
-          kbd.textContent = 'Ctrl+' + (idx + 1);
-          btn.appendChild(kbd);
-        }
         const nameEl = document.createElement('div');
         nameEl.className = 'fav-btn-name';
         nameEl.textContent = p.name;
@@ -863,9 +857,8 @@
     if (ev.key === 'F10') { ev.preventDefault(); reprintLast(); return; }
     if (ev.key === 'F11') { ev.preventDefault(); openCupomCompleto(); return; }
 
-    // F4 e F6 preservados pra compatibilidade com documentacao antiga
+    // F4/F9 preservados pra compat antiga; F6 reservado pra abrir gaveta eletronica no futuro
     if (ev.key === 'F4') { ev.preventDefault(); removeSelected(); return; }
-    if (ev.key === 'F6') { ev.preventDefault(); openPagamento(); return; }
     if (ev.key === 'F9') { ev.preventDefault(); openPreco(); return; }
     if (ev.key === 'F12') {
       ev.preventDefault();
@@ -900,16 +893,6 @@
         }
       }
       if (k === 'i') { ev.preventDefault(); openPreco(); return; }
-      // Ctrl+1..9 → favorito N (Fase 14)
-      if (/^[1-9]$/.test(k)) {
-        const idx = parseInt(k, 10) - 1;
-        const favs = allProducts.filter(p => p.favorite && p.active);
-        if (idx < favs.length) {
-          ev.preventDefault();
-          addFavorite(favs[idx]);
-        }
-        return;
-      }
     }
     // Fase 20: Setinhas sempre navegam.
     if (ev.key === 'ArrowUp' || ev.key === 'ArrowDown') {

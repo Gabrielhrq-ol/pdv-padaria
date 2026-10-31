@@ -202,3 +202,41 @@ def logout(
 @router.get("/me", response_model=UserOut)
 def me(user: User = Depends(get_current_user)) -> User:
     return user
+
+
+@router.get("/admins")
+def list_admins(db: Session = Depends(get_db)) -> list[dict]:
+    """Lista admins ativos pro dropdown de entrada sem senha."""
+    rows = db.execute(
+        select(User.id, User.name, User.username)
+        .where(User.role == "admin", User.active.is_(True))
+        .order_by(User.name)
+    ).all()
+    return [{"id": r.id, "nome": r.name or r.username} for r in rows]
+
+
+@router.post("/select-admin/{user_id}", status_code=204)
+def select_admin(
+    user_id: int,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+) -> Response:
+    """Entra como admin SEM senha. Cliente pediu simplicidade: dono acessa direto."""
+    user = db.get(User, user_id)
+    if user is None or not user.active or user.role != "admin":
+        raise HTTPException(status_code=404, detail="Admin nao encontrado.")
+
+    now = utc_now()
+    user.failed_login_count = 0
+    user.locked_until = None
+    user.last_login_at = now
+
+    session_token = create_session_token(user.id)
+    csrf_token = generate_csrf_token()
+    _set_auth_cookies(response, session_token, csrf_token)
+
+    _audit(db, action="login_ok_passwordless", user_id=user.id, ip=_client_ip(request))
+    db.commit()
+    response.status_code = 204
+    return response
