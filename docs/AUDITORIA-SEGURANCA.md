@@ -37,7 +37,7 @@ liberado, nem upload de arquivo, nem endpoint público.
 ### C1. Credenciais de desenvolvimento ainda no banco antes da entrega
 
 **Localização:** banco local atual (`data/pdv.db`)
-**Risco:** usuário `gabriel` com senha `TesteSenha123` tem papel admin.
+**Risco:** usuário de desenvolvimento com papel admin pode ter sobrado no banco.
 Se o PC do cliente for ligado em rede local sem segmentação (ou acessado
 fisicamente), qualquer pessoa pode logar como admin.
 

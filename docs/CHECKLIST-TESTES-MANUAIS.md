@@ -15,7 +15,7 @@ depois de completar `docs/INSTALACAO.md`.
 - [ ] `data/cliente.json` real criado e **não** aparece em `git status`
 - [ ] `data/pdv.db` existe e `alembic current` mostra `d0b3bdd9d9e8`
 - [ ] `.env` tem `SECRET_KEY` real (não placeholder) e `ENVIRONMENT=production`
-- [ ] Credenciais de dev (`gabriel`/`TesteSenha123`) **DESATIVADAS**
+- [ ] Credenciais de dev **DESATIVADAS** via `scripts/trocar_admin.py`
   (`SELECT username, active FROM users` mostra apenas o dono ativo)
 - [ ] Atalho `PDV` existe no desktop e abre o navegador
 

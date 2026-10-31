@@ -129,8 +129,8 @@ janela cmd preta + navegador em `http://127.0.0.1:8000`.
 
 ### Passo 6 — Trocar credenciais de dev (CRÍTICO antes de entregar)
 
-**NÃO esquece disso.** Se por alguma razão o usuário `gabriel` /
-`TesteSenha123` estiver no banco, remove:
+**NÃO esquece disso.** Se o usuário de desenvolvimento ainda estiver no
+banco (visível no dropdown do painel do dono), remove:
 
 ```powershell
 cd C:\pdv-padaria-kit\pdv-padaria
